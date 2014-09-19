@@ -8,6 +8,8 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
 
+import no.jamstilling.jettyserver.handlers.FileContentHandler;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
@@ -34,6 +36,8 @@ public class JettyServer {
 
 	public JettyServer() throws Exception {
 		readConfig();
+	
+		
 		startServer();
 	}
 
@@ -41,6 +45,12 @@ public class JettyServer {
 		Server server = new Server(port);		 
 		HandlerList handlers = new HandlerList();
 	
+		FileContentHandler frontPage = new FileContentHandler("/", "pages/frontpage.html");
+		FileContentHandler pageNotFound = new FileContentHandler(null, "pages/pagenotfound.html");
+		
+		handlers.addHandler(frontPage);
+		handlers.addHandler(pageNotFound);
+		
 		server.setHandler(handlers);
 		server.start();
 		server.join();
@@ -48,27 +58,17 @@ public class JettyServer {
 	}
 	
 	private void readConfig() {
-		File f = new File(".");
-		System.out.println(f.getAbsolutePath());
-		
-		logger.trace("In readConfig as trace");
 		Properties prop = new Properties();
-		InputStream input = null;
-	 
-		logger.debug("In readConfig as debug");
-		logger.error("In readConfig as error");
-		logger.warn("In readConfig as warn");
 		
 		try {
-	 		input = new FileInputStream("jettyserver.properties");
+			InputStream input = new FileInputStream("jettyserver.properties");
 	 		prop.load(input);
-	 		
-	 		System.out.println(prop.getProperty("port"));
 	
 	 		port = Integer.parseInt(prop.getProperty("port"));
-		
+	 		
+	 		input.close();
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			logger.error("Error reading config", ex);
 		} 
 	}
 	
