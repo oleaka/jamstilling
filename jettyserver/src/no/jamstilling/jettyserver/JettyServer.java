@@ -9,6 +9,9 @@ import java.util.Properties;
 import javax.servlet.http.HttpServletResponse;
 
 import no.jamstilling.jettyserver.handlers.FileContentHandler;
+import no.jamstilling.jettyserver.handlers.PageNotFoundHandler;
+import no.jamstilling.jettyserver.handlers.StartCrawlHandler;
+import no.jamstilling.jettyserver.parser.CrawlManager;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +26,9 @@ public class JettyServer {
 	
 	private int port = 8081;
 	
+	
+	private static CrawlManager crawlManager = null;
+	
 	/**
 	 * @param args
 	 */
@@ -36,7 +42,6 @@ public class JettyServer {
 
 	public JettyServer() throws Exception {
 		readConfig();
-	
 		
 		startServer();
 	}
@@ -45,16 +50,28 @@ public class JettyServer {
 		Server server = new Server(port);		 
 		HandlerList handlers = new HandlerList();
 	
-		FileContentHandler frontPage = new FileContentHandler("/", "pages/frontpage.html");
-		FileContentHandler pageNotFound = new FileContentHandler(null, "pages/pagenotfound.html");
+		FileContentHandler testPage = new FileContentHandler("/test", "pages/test.html");
 		
+		FileContentHandler frontPage = new FileContentHandler("/", "pages/frontpage.html");
+		StartCrawlHandler startCrawlHandler = new StartCrawlHandler("/crawl_start");
+
+		PageNotFoundHandler pageNotFound = new PageNotFoundHandler("pages/pagenotfound.html");
+		
+		handlers.addHandler(testPage);
 		handlers.addHandler(frontPage);
+		handlers.addHandler(startCrawlHandler);
 		handlers.addHandler(pageNotFound);
 		
 		server.setHandler(handlers);
 		server.start();
 		server.join();
-
+	}
+	
+	public synchronized static CrawlManager getCrawlManager() {
+		if(crawlManager == null) {
+			crawlManager = new CrawlManager();
+		}
+		return crawlManager;
 	}
 	
 	private void readConfig() {

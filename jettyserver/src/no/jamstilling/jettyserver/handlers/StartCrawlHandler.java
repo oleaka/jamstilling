@@ -1,36 +1,22 @@
 package no.jamstilling.jettyserver.handlers;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.WatchService;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import no.jamstilling.jettyserver.JettyServer;
-import no.jamstilling.jettyserver.utils.FileWatcher;
+import no.jamstilling.jettyserver.parser.CrawlManager;
 
-import static java.nio.file.StandardWatchEventKinds.*;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-public class FileContentHandler extends FileHandler {
+public class StartCrawlHandler extends AbstractHandler {
 
-	static final Logger logger = LogManager.getLogger(FileContentHandler.class.getName());
-	
 	private final String urlToHandle;
 	
-	public FileContentHandler(String urlToHandle, String fileName) {
-		super(fileName);
+	public StartCrawlHandler(String urlToHandle) {
 		this.urlToHandle = urlToHandle;
 	}
 	
@@ -42,9 +28,11 @@ public class FileContentHandler extends FileHandler {
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        baseRequest.setHandled(true);
 	        
-	        response.getWriter().println(getFileContent());
+	        JettyServer.getCrawlManager().startCrawl("www.test.com");
+	        
+	        response.getWriter().println("<html><body>Started crawl</body></html>");
     	} 
 	}
-	
 
+	
 }

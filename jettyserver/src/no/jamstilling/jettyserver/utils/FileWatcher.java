@@ -1,4 +1,4 @@
-package no.jamstilling.jettyserver;
+package no.jamstilling.jettyserver.utils;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
@@ -27,9 +27,9 @@ public class FileWatcher {
 	private final static WatchService watcher = getWatcher();
 	private final static Map<WatchKey, Path> watching=new HashMap<WatchKey, Path>();
 	
-	private final static Map<String, List<FileContentHandler>> fileHandlers = new HashMap<String, List<FileContentHandler>>();
+	private final static Map<String, List<FileHandler>> fileHandlers = new HashMap<String, List<FileHandler>>();
 	
-	public static void registerFile(Path path, FileContentHandler handler) throws IOException {
+	public static void registerFile(Path path, FileHandler handler) throws IOException {
 		Path catalog = path.getParent();
 		WatchKey key = catalog.register(watcher, ENTRY_MODIFY);	
 		watching.put(key, path);
@@ -38,7 +38,7 @@ public class FileWatcher {
 			String absName = path.toFile().getAbsolutePath();
 			
 			if(!fileHandlers.containsKey(absName)) {
-				LinkedList<FileContentHandler> list = new LinkedList<FileContentHandler>();
+				LinkedList<FileHandler> list = new LinkedList<FileHandler>();
 				fileHandlers.put(absName, list);
 			}
 			
@@ -59,7 +59,7 @@ public class FileWatcher {
 				String absName = changedPath.toFile().getAbsolutePath();
 				synchronized (fileHandlers) {
 					if(fileHandlers.containsKey(absName)) {
-						for(FileContentHandler handler : fileHandlers.get(absName)) {
+						for(FileHandler handler : fileHandlers.get(absName)) {
 							handler.fileChanged(changedPath);
 						}
 					}
