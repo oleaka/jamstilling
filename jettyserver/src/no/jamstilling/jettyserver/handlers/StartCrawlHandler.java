@@ -1,6 +1,7 @@
 package no.jamstilling.jettyserver.handlers;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +29,12 @@ public class StartCrawlHandler extends AbstractHandler {
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        baseRequest.setHandled(true);
 	        
-	        JettyServer.getCrawlManager().startCrawl("www.test.com");
+	        try {
+				JettyServer.getCrawlManager().startCrawl("www.test.com");
+			} catch (URISyntaxException e) {
+		        response.getWriter().println("<html><body>Error starting crawl " + e.getMessage() + "</body></html>");
+
+			}
 	        
 	        response.getWriter().println("<html><body>Started crawl</body></html>");
     	} 

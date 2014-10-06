@@ -2,12 +2,29 @@ package no.jamstilling.jettyserver.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 public class CrawlManager {
 
-	public boolean startCrawl(String domain) {
+	private String cleanUrl(String url) {
 		
-		String command = "java -jar crawler.jar no.jamstilling.crawler.Crawler";
+		if(!url.startsWith("http://") || !(url.startsWith("https://"))) {
+			url = "http://" + url;
+		}
+		if(url.endsWith("/")) {
+			url = url.substring(0, url.length()-1);
+		}
+		return url;
+	}
+
+	
+	public boolean startCrawl(String domain) throws MalformedURLException, URISyntaxException {
+		
+		URL url = new URL(cleanUrl(domain));
+		
+		String command = "java -jar crawler.jar no.jamstilling.crawler.Crawler " + url.toURI().toString();
 		
 		try {
 			Process process = Runtime.getRuntime().exec( command );
