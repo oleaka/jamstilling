@@ -10,7 +10,7 @@ public class CrawlManager {
 
 	private String cleanUrl(String url) {
 		
-		if(!url.startsWith("http://") || !(url.startsWith("https://"))) {
+		if(!url.startsWith("http://") && !url.startsWith("https://")) {
 			url = "http://" + url;
 		}
 		if(url.endsWith("/")) {
@@ -24,7 +24,7 @@ public class CrawlManager {
 		
 		URL url = new URL(cleanUrl(domain));
 		
-		String command = "java -jar crawler.jar no.jamstilling.crawler.Crawler " + url.toURI().toString();
+		String command = "java -jar crawler.jar no.jamstilling.crawler.Crawler \"" + url.toURI().toString() + "\"";
 		
 		try {
 			Process process = Runtime.getRuntime().exec( command );

@@ -1,12 +1,9 @@
 package no.jamstilling.crawler.language;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-import no.jamstilling.crawler.DomeneParser;
 import no.jamstilling.crawler.ParseResult;
-import no.jamstilling.crawler.WebCreator;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,8 +21,8 @@ public class LanguageAnalyzer {
 		ParseResult res = analyzeTextBlock(url, body);		
 		ArrayList<String> text = new ArrayList<String>();
 		text.add(body);
-		report(res, url, text);
-		return new ParseResult(/*url,*/ res);
+	//	report(res, url, text);
+		return new ParseResult(res);
 	}
 	
 	public static ParseResult analyzeBody(Document doc, String url) {
@@ -41,10 +38,9 @@ public class LanguageAnalyzer {
 
 		ParseResult res = analyzeTextBlock(url, body);
 		
-		report(res, url, foundText);
+		//report(res, url, foundText);
 		
 		return res;
-	//	return new ParseResult(/*url, */res);
 	}	
 
 	private static ParseResult analyzeTextBlock(String url, String body) {
@@ -57,6 +53,7 @@ public class LanguageAnalyzer {
 		return new ParseResult(url, body, split.length,  nynorsk, bokmaal, english);	
 	}
 		
+	/*
 	private static void report(ParseResult res, String url, ArrayList<String> text) {
 		
 		DomeneParser.display.setText(url + " - nn: " +  String.format("%.2f", res.getNynorskProsent()*100.0) + "% bm:" + String.format("%.2f", res.getBokmaalProsent()*100.0) +"%");
@@ -69,7 +66,7 @@ public class LanguageAnalyzer {
 		}
 		
 	}
-	
+	*/
 	private static String extract(ArrayList<String> foundText) {
 		
 		StringBuffer buffer = new StringBuffer();

@@ -51,7 +51,7 @@ public class Domene {
 
 	private String cleanUrl(String url) {
 	
-		if(!url.startsWith("http://") || !(url.startsWith("https://"))) {
+		if(!url.startsWith("http://") && !url.startsWith("https://")) {
 			url = "http://" + url;
 		}
 		if(url.endsWith("/")) {

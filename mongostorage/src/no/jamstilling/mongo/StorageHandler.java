@@ -13,6 +13,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 public class StorageHandler {
@@ -25,6 +26,8 @@ public class StorageHandler {
 	private MongoClient connection = null;
 	private DB dbConnection = null;
 	private DBCollection resultCollection = null;
+	private DBCollection linkCollection = null;
+	private DBCollection errorCollection = null;
 	
 	public StorageHandler() {
 		readConfig();
@@ -49,7 +52,21 @@ public class StorageHandler {
 	public void connect(String db) throws UnknownHostException {
 		connection = new MongoClient( host, port );
 		dbConnection = connection.getDB( db );
-		resultCollection = dbConnection.getCollection("parseresult");
+		
+		if(!dbConnection.collectionExists("parseresults")) {
+			dbConnection.createCollection("parseresults", null);
+		}
+		if(!dbConnection.collectionExists("links")) {
+			dbConnection.createCollection("links", null);
+		}
+		if(!dbConnection.collectionExists("errors")) {
+			dbConnection.createCollection("errors", null);
+		}
+		
+		
+		resultCollection = dbConnection.getCollection("parseresults");
+		linkCollection = dbConnection.getCollection("links");
+		errorCollection = dbConnection.getCollection("errors");
 	}
 	
 	public boolean alreadyParsed(String url) {
@@ -64,8 +81,53 @@ public class StorageHandler {
 		} finally {
 		   cursor.close();
 		}
+		
+		cursor = linkCollection.find(query);
+
+		try {
+		   while(cursor.hasNext()) {
+			   return true;
+		   }
+		} finally {
+		   cursor.close();
+		}
+		
+		cursor = errorCollection.find(query);
+
+		try {
+		   while(cursor.hasNext()) {
+			   return true;
+		   }
+		} finally {
+		   cursor.close();
+		}
+
 		return false;
 	} 
+	
+	public synchronized String getNextLink() {
+		DBObject myDoc = linkCollection.findOne();
+		if(myDoc != null) {
+			String url = (String) myDoc.get("url");
+			linkCollection.remove(myDoc);
+			return url;
+		} 
+		return null;
+	}
+	
+	public void insertUnparsedPage(String url) {
+		if(!alreadyParsed(url)) {
+			BasicDBObject doc = new BasicDBObject("url", url);
+			linkCollection.insert(doc);
+		}
+	}
+	
+	public void insertPageFailed(String url, String message) {
+		BasicDBObject doc = new BasicDBObject("url", url)
+        .append("error", message);
+
+		errorCollection.insert(doc);
+	}
 	
 	public void insertPageResult(String url, String content, int wordCount, int wordCountNN, int wordCountBM, int wordCountEN) {
 		BasicDBObject doc = new BasicDBObject("url", url)

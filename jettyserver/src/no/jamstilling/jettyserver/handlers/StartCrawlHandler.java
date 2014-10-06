@@ -30,7 +30,7 @@ public class StartCrawlHandler extends AbstractHandler {
 	        baseRequest.setHandled(true);
 	        
 	        try {
-				JettyServer.getCrawlManager().startCrawl("www.test.com");
+				JettyServer.getCrawlManager().startCrawl("http://www.tidstankar.no");
 			} catch (URISyntaxException e) {
 		        response.getWriter().println("<html><body>Error starting crawl " + e.getMessage() + "</body></html>");
 

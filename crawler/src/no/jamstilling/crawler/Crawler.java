@@ -27,14 +27,20 @@ public class Crawler {
 		try {
 			new Crawler(getDomain(args));
 		} catch (IOException e) {
-			e.printStackTrace();
+			try {
+				log(e);
+			} catch (FileNotFoundException | UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		} 
 	}
 	
 	private static URL getDomain(String[] args) throws MalformedURLException {
-
+		
 		String domain = args[args.length-1];
 		URL url = new URL(domain);
+		log(domain + " => " + url.toString());
 		return url;
 	}
 
@@ -61,6 +67,29 @@ public class Crawler {
 	}
 
 	
+	private static void log(Exception e) throws FileNotFoundException, UnsupportedEncodingException {
+		PrintWriter writer = new PrintWriter(System.currentTimeMillis() + ".log", "UTF-8");
+
+		writer.print(e.getMessage());
+		
+		writer.close();
+		
+	}
+
+	private static void log(String msg) {
+		try {
+			PrintWriter writer = new PrintWriter(System.currentTimeMillis() + ".log", "UTF-8");
+			writer.print(msg);
+			
+			writer.close();
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
+	}
+
 	private void test(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 		
 		PrintWriter writer = new PrintWriter("crawler.log", "UTF-8");

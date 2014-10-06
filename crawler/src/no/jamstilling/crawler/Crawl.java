@@ -36,8 +36,8 @@ public class Crawl extends Thread {
 	
 	private StorageHandler storage;
 	
-	private final HashSet<String> links = new HashSet<String>();
-	private final HashSet<String> parsedLinks = new HashSet<String>();
+//	private final HashSet<String> links = new HashSet<String>();
+//	private final HashSet<String> parsedLinks = new HashSet<String>();
 	
 	private final Domene domene;
 	private final ArrayList<String> exceptions;
@@ -142,35 +142,22 @@ public class Crawl extends Thread {
 
 	}
 
+	/*
 	private CrawlResultSummary reportResult() throws IOException {
 		return ResultFileWriter.getGlobalResult(domene.getDomainPart());
 	}
+	*/
 	
 	private void addInitialLinks() {
-		addLink(domene.getUrl());
+		storage.insertUnparsedPage(domene.getUrl());
 	}
 	
 	private void addLink(String url) {
-		synchronized (links) {
-			links.add(url);
-		}
+		storage.insertUnparsedPage(domene.getUrl());
 	}
-
-	private int cutOff = 15;
 	
 	private String getNextLink() {
-		
-		synchronized (links) {
-			if(links.size() > 0) {
-				String link = links.iterator().next();
-				links.remove(link);
-
-				parsedLinks.add(link);
-				
-				return link;
-			}
-		}
-		return null;
+		return storage.getNextLink();
 	}
 	
 	private void performCrawl() {
@@ -262,19 +249,11 @@ public class Crawl extends Thread {
 			}
 
 			if(verifyLink(absoluteLink)) {
-				if(!absoluteLink.equals(url) && !parsedLinks.contains(absoluteLink) && !links.contains(absoluteLink)) {
+				if(!absoluteLink.equals(url)) {
 					addLink(absoluteLink);
 				} 
 			}	
 
-			
-			/*
-			if(verifyLink(absoluteLink)) {
-				if(!absoluteLink.equals(url) && !parsedURLS.containsKey(absoluteLink) && !links.contains(absoluteLink)) {
-					addLink(absoluteLink);
-				} 
-			}
-			*/	
 		}
 
 	}
@@ -301,41 +280,24 @@ public class Crawl extends Thread {
 							analyzeBody(body, url);
 						}
 					} else {
-						WebCreator.error(url + " => " + e.getMessage());
-						DomeneParser.display.setText("URL " + url + " feilet. " + type);
+						storage.insertPageFailed(url, e.getMessage());
 					}
 				} catch (Exception x) {
-					WebCreator.error(url + " => " + e.getMessage());
-
-					DomeneParser.display.setText("URL " + url + " feilet");
-					x.printStackTrace();
+					storage.insertPageFailed(url, x.getMessage());
 				} catch (Throwable x) {
-					WebCreator.error(url + " => " + e.getMessage());
-					DomeneParser.display.setText("URL " + url + " feilet");
-					x.printStackTrace();					
+					storage.insertPageFailed(url, x.getMessage());
 				}
 			} else {
-				WebCreator.error(url + " => " + e.getMessage());
-				DomeneParser.display.setText("URL " + url + " feilet");
+				storage.insertPageFailed(url, e.getMessage());
 			}
 		} catch (HttpStatusException e) {
-			WebCreator.error(url + " => " + e.getMessage());
-			DomeneParser.display.setText("URL " + url + " feilet");
-			e.printStackTrace();
+			storage.insertPageFailed(url, e.getMessage());
 		} catch (IOException e) {
-			WebCreator.error(url + " => " + e.getMessage());
-			DomeneParser.display.setText("URL " + url + " feilet");
-			e.printStackTrace();
+			storage.insertPageFailed(url, e.getMessage());
 		} catch (Exception e) {
-			WebCreator.error(url + " => " + e.getMessage());
-			DomeneParser.display.setText("URL " + url + " feilet");
-			//		System.out.println("URL " + url + " feilet");
-			e.printStackTrace();
+			storage.insertPageFailed(url, e.getMessage());
 		} catch (Throwable e) {
-			WebCreator.error(url + " => " + e.getMessage());
-			DomeneParser.display.setText("URL " + url + " feilet");
-			//		System.out.println("URL " + url + " feilet");
-			e.printStackTrace();			
+			storage.insertPageFailed(url, e.getMessage());
 		}
 		
 
@@ -369,7 +331,6 @@ public class Crawl extends Thread {
 			}
  			
 			if(isException(url)) {
-				DomeneParser.display.setText("URL unntak " + url);
 				return false;
 			}
 			
