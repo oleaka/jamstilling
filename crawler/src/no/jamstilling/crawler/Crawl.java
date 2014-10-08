@@ -66,8 +66,6 @@ public class Crawl extends Thread {
 	}
 	
 	public void run() {
-		
-		
 		try {
 			setupTrust();
 		} catch (KeyManagementException e1) {
@@ -189,7 +187,7 @@ public class Crawl extends Thread {
 			} catch (InterruptedException e) {
 			}
 		}	
-	
+		storage.crawlDone();
 	}
 	
 
