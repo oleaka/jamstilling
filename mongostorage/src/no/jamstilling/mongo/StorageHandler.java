@@ -137,6 +137,7 @@ public class StorageHandler {
 	}
 	
 	public boolean alreadyParsed(String url) {
+		System.out.println("aleadyParsed: " + url);
 		BasicDBObject query = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
 
 		DBCursor cursor = resultCollection.find(query);
@@ -173,7 +174,12 @@ public class StorageHandler {
 	} 
 	
 	public synchronized String getNextLink() {
-		DBObject myDoc = linkCollection.findOne();
+		System.out.println("getNextLink");
+
+		BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
+
+		
+		DBObject myDoc = linkCollection.findOne(searchQuery);
 		if(myDoc != null) {
 			String url = (String) myDoc.get(URL);
 			linkCollection.remove(myDoc);
@@ -182,7 +188,19 @@ public class StorageHandler {
 		return null;
 	}
 	
+	public void getResult() {
+		/*
+db.crawlresults.aggregate([{$match: {crawlid: "4"}}, {$group: {_id:null, total
+:{$sum: "$wordcount"}, nn:{$sum: "$wordcountNN"}, bm:{$sum: "$wordcountBM"}, en:
+{$sum: "$wordcountEN"}}}])
+{ "_id" : null, "total" : 634823, "nn" : 13960, "bm" : 15764, "en" : 33 }
+>
+		 */
+	}
+	
 	public void insertUnparsedPage(String url) {
+		System.out.println("insertUnparsedPage: " + url);
+
 		if(!alreadyParsed(url)) {
 			BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
 			linkCollection.insert(doc);

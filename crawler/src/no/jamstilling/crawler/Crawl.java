@@ -151,7 +151,7 @@ public class Crawl extends Thread {
 	}
 	
 	private void addLink(String url) {
-		storage.insertUnparsedPage(domene.getUrl());
+		storage.insertUnparsedPage(url);
 	}
 	
 	private String getNextLink() {
@@ -246,6 +246,8 @@ public class Crawl extends Thread {
 				continue;
 			}
 
+			System.out.println("findLinks: " + absoluteLink);
+			
 			if(verifyLink(absoluteLink)) {
 				if(!absoluteLink.equals(url)) {
 					addLink(absoluteLink);
