@@ -48,6 +48,7 @@ public class Crawl extends Thread {
 		this.sleepTime = sleepTime;
 		this.storage = new StorageHandler();
 		this.storage.connect(domene.getDomainPart());
+		this.storage.newCrawl();
 		
 		ArrayList<String> tmpExceptionList = new ArrayList<String>();
 		if(exceptionList != null && !"".equals(exceptionList)) {
