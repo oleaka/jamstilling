@@ -14,10 +14,8 @@ public class CrawlerTest {
 	@Test
 	public void testCrawl() {
 		
-		
-		
 		try {
-			Crawl crawl = new Crawl(new Domene("http://www.sprakradet.no"), "", 200);	
+			Crawl crawl = new Crawl(new Domene("http://janneeikeland.blogg.no"), "", 200);	
 			crawl.run();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
