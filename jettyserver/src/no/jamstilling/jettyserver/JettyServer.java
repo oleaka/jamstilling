@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import no.jamstilling.jettyserver.handlers.FileContentHandler;
 import no.jamstilling.jettyserver.handlers.PageNotFoundHandler;
+import no.jamstilling.jettyserver.handlers.ShowCrawlsForDomain;
 import no.jamstilling.jettyserver.handlers.ShowResultHandler;
 import no.jamstilling.jettyserver.handlers.StartCrawlHandler;
 import no.jamstilling.jettyserver.parser.CrawlManager;
@@ -55,6 +56,7 @@ public class JettyServer {
 		
 		FileContentHandler frontPage = new FileContentHandler("/", "pages/frontpage.html");
 		StartCrawlHandler startCrawlHandler = new StartCrawlHandler("/crawl_start");
+		ShowCrawlsForDomain crawlsForDomain = new ShowCrawlsForDomain("/crawlsfordomain", "pages/crawlsfordomain.html");
 		ShowResultHandler resultHander = new ShowResultHandler("/result", "pages/result.html");
 
 		PageNotFoundHandler pageNotFound = new PageNotFoundHandler("pages/pagenotfound.html");
@@ -62,6 +64,7 @@ public class JettyServer {
 		handlers.addHandler(testPage);
 		handlers.addHandler(frontPage);
 		handlers.addHandler(startCrawlHandler);
+		handlers.addHandler(crawlsForDomain);
 		handlers.addHandler(resultHander);
 		handlers.addHandler(pageNotFound);
 		
