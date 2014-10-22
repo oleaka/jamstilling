@@ -32,44 +32,55 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
     		
     		String domain = request.getParameter("domain");
     		System.out.println(domain);
-    		domain = "tidstankar.no";
-    	
-    		try {
-	        response.setContentType("text/html;charset=utf-8");
+    		//domain = "tidstankar.no";
+
+    		response.setContentType("text/html;charset=utf-8");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        baseRequest.setHandled(true);
-
-	        StorageHandler storage = new StorageHandler();
-	        storage.connect(domain);
-
-	        List<Crawl> finishedCrawls = storage.getFinishedCrawls();
-	        List<Crawl> inProgressCrawls = storage.getUnfinishedCrawls();
-	        
-	        String finishedCrawlsTable = createTable(finishedCrawls);
-	        String inProgressCrawlsTable = createTable(inProgressCrawls);
-	        
-	        String fileContent = getFileContent();
-
-	        fileContent = fileContent.replaceAll("%DOMAIN%", domain);
-	        fileContent = fileContent.replace("%FINISHED_TABLE%", finishedCrawlsTable);
-	        fileContent = fileContent.replace("%IN_PROGRESS_TABLE%", inProgressCrawlsTable);
-    	
-	        response.getWriter().println(fileContent);
+	
+    		try {
+	
+		        StorageHandler storage = new StorageHandler();
+		        storage.connect(domain);
+	
+		        List<Crawl> finishedCrawls = storage.getFinishedCrawls();
+		        List<Crawl> inProgressCrawls = storage.getUnfinishedCrawls();
+		        
+		        String finishedCrawlsTable = createTable(finishedCrawls, domain);
+		        String inProgressCrawlsTable = createTable(inProgressCrawls, domain);
+		        
+		        String fileContent = getFileContent();
+	
+		        fileContent = fileContent.replaceAll("%DOMAIN%", domain);
+		        fileContent = fileContent.replace("%FINISHED_TABLE%", finishedCrawlsTable);
+		        fileContent = fileContent.replace("%UNFINISHED_TABLE%", inProgressCrawlsTable);
+	    	
+		        response.getWriter().println(fileContent);
     		} catch (Exception e) {
-    			e.printStackTrace();
+    			response.getWriter().println(e.getMessage());
     		}
     	}
     }
 	
-	private String createTable(List<Crawl> list) {
+	private String createTable(List<Crawl> list, String domain) {
 		StringBuffer buffer = new StringBuffer();
 		
-		buffer.append("<table>");
+		buffer.append("<table border=\"1\">");
+
+		buffer.append("<tr>");
+	    buffer.append("<th>Id</th>");
+	    buffer.append("<th>Startet</th>");
+	    buffer.append("<th>Ferdig</th>");
+	    buffer.append("<th>Resultat</th>");
+		buffer.append("</tr>");
+		
 		for(Crawl crawl : list) {
 			buffer.append("<tr>");
 			
+			buffer.append("<td>" + crawl.crawlId + "</td>");
 			buffer.append("<td>" + crawl.started + "</td>");
 			buffer.append("<td>" + crawl.ended + "</td>");
+			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId + "\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
 			
 			buffer.append("</tr>");
 		}

@@ -61,9 +61,9 @@ public class StorageHandler {
 			InputStream input = new FileInputStream("mongo.properties");
 	 		prop.load(input);
 	
-	 		port = Integer.parseInt(prop.getProperty("port"));
-	 		host = prop.getProperty("host");
-	 		
+	 		port = Integer.parseInt(prop.getProperty("port", "21017"));
+	 		host = prop.getProperty("host", "localhost");
+	 	
 	 		input.close();
 		} catch (Exception ex) {
 			logger.error("Error reading config", ex);
@@ -73,7 +73,7 @@ public class StorageHandler {
 	public void connect(String db) throws UnknownHostException {
 		domain = db;
 		String mongoCompatibleDB = db.replaceAll("\\.", "_");
-		
+		System.out.println("connecting to mongodb on " + host + ":" + port + " using db " + mongoCompatibleDB);
 		connection = new MongoClient( host, port );
 		dbConnection = connection.getDB( mongoCompatibleDB );
 		
@@ -217,46 +217,6 @@ public class StorageHandler {
 		
 		crawlId = id;
 	}
-	
-	/*
-	public void setupCrawlId() {
-		
-		String maxId = null;
-		DBCursor cursor = crawlsCollection.find();
-		try {
-			while(cursor.hasNext()) {
-				DBObject row = cursor.next();
-
-				String candidateId = (String) row.get(CRAWLID);
-				String isFinished = (String)row.get(DONE);
-				if(isFinished.equals("false")) {
-					crawlId = candidateId;
-					return;
-				}
-				if(maxId == null) {
-					maxId = candidateId;
-				} else {
-					if(Integer.parseInt(candidateId) > Integer.parseInt(maxId)) {
-						maxId = candidateId;
-					}
-				}		
-			}
-		} finally {
-			cursor.close();
-		}
-			
-		String id = "1";
-		if(maxId != null) {
-			id = "" + (Integer.parseInt(maxId) + 1);
-		}
-
-		String startString = format.format(new Date());			
-		BasicDBObject doc = new BasicDBObject(CRAWLID, id).append(DONE, "false").append(STARTED, startString).append(ENDED, "");
-		crawlsCollection.insert(doc);
-		
-		crawlId = id;
-	}
-	*/
 	
 	public boolean alreadyParsed(String url) {
 		System.out.println("aleadyParsed: " + url);
