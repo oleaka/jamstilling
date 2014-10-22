@@ -29,16 +29,18 @@ public class CrawlManager {
 		try {
 			Process process = Runtime.getRuntime().exec( command );
 
+			boolean ok = true;
 			InputStream stream = process.getErrorStream();
 			int b = stream.read();
 			while(b != -1) {
 				System.out.print((char)b);
 				b = stream.read();
+				ok = false;
 			}
 			
 			System.out.println("");
 			
-			return true;
+			return ok;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

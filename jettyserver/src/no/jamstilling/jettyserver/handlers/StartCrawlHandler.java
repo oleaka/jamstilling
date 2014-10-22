@@ -28,15 +28,20 @@ public class StartCrawlHandler extends AbstractHandler {
 	        response.setContentType("text/html;charset=utf-8");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        baseRequest.setHandled(true);
-	        
-	        try {
-				JettyServer.getCrawlManager().startCrawl("http://www.tidstankar.no");
-			} catch (URISyntaxException e) {
-		        response.getWriter().println("<html><body>Error starting crawl " + e.getMessage() + "</body></html>");
 
+	        String domain = request.getParameter("domain");
+    		String exceptions = request.getParameter("exceptions");
+
+	        try {
+	        	if(JettyServer.getCrawlManager().startCrawl(domain)) {
+	    	        response.getWriter().println("<html><body>Startet undersøkelse av " + domain + "</body></html>");
+	    	   } else {
+	    			response.getWriter().println("<html><body>Noe gikk galt.</body></html>");
+	        	}
+			} catch (URISyntaxException e) {
+				response.getWriter().println("<html><body>Error starting crawl " + e.getMessage() + "</body></html>");
 			}
 	        
-	        response.getWriter().println("<html><body>Started crawl</body></html>");
     	} 
 	}
 

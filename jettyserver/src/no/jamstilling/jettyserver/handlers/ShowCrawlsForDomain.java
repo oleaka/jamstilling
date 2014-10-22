@@ -46,14 +46,15 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 		        List<Crawl> finishedCrawls = storage.getFinishedCrawls();
 		        List<Crawl> inProgressCrawls = storage.getUnfinishedCrawls();
 		        
-		        String finishedCrawlsTable = createTable(finishedCrawls, domain);
-		        String inProgressCrawlsTable = createTable(inProgressCrawls, domain);
+		        String finishedText = createFinishedText(finishedCrawls, domain);
+		        String inProgressText = createInProgressText(inProgressCrawls, domain);
+		//        String inProgressCrawlsTable = createTable(inProgressCrawls, domain);
 		        
 		        String fileContent = getFileContent();
 	
 		        fileContent = fileContent.replaceAll("%DOMAIN%", domain);
-		        fileContent = fileContent.replace("%FINISHED_TABLE%", finishedCrawlsTable);
-		        fileContent = fileContent.replace("%UNFINISHED_TABLE%", inProgressCrawlsTable);
+		        fileContent = fileContent.replace("%FINISHED_TABLE%", finishedText);
+		        fileContent = fileContent.replace("%UNFINISHED_TABLE%", inProgressText);
 	    	
 		        response.getWriter().println(fileContent);
     		} catch (Exception e) {
@@ -61,6 +62,22 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
     		}
     	}
     }
+	
+	private String createInProgressText(List<Crawl> list, String domain) {
+		if(list.size() > 0) {
+			return createTable(list, domain);
+		} else {
+			return createStartCrawlText(domain);
+		}
+	}
+	
+	private String createFinishedText(List<Crawl> list, String domain) {
+		if(list.size() > 0) {
+			return createTable(list, domain);
+		} else {
+			return "Ingen ferdige undersøkelser";
+		}
+	}
 	
 	private String createTable(List<Crawl> list, String domain) {
 		StringBuffer buffer = new StringBuffer();
@@ -87,5 +104,10 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 		buffer.append("</table>");
 		
 		return buffer.toString();
+	}
+
+	private String createStartCrawlText(String domain) {
+		return "Ingen aktive undersøkelser.<br>"
+			+ "<form method=POST action=\"crawl_start?domain="+domain+ "\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Start ny undersøkelse\"></form>";
 	}
 }
