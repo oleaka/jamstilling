@@ -46,13 +46,16 @@ public class ShowResultHandler  extends FileHandler {
 		        storage.connect(domain);
 		        storage.continueCrawl(crawlId);
 
-		        CrawlResult result = storage.getResult();
-		        
-		        String resultTable = createResultTable(result);
+		        CrawlResult summaryResult = storage.getResult();
+		        String summaryTable = createSummaryTable(summaryResult);
+		        storage.getDetailResult();				
+
+		        String detailsTable = createDetailsTable();
 		        
 		        String fileContent = getFileContent();
 		        fileContent = fileContent.replaceAll("%DOMAIN%", domain);
-		        fileContent = fileContent.replace("%RESULT_TABLE%", resultTable);
+		        fileContent = fileContent.replace("%SUMMARY_TABLE%", summaryTable);
+		        fileContent = fileContent.replace("%DETAILS_TABLE%", detailsTable);
 		        
 		        response.getWriter().println(fileContent);
 	        } catch (Exception e) {
@@ -63,19 +66,14 @@ public class ShowResultHandler  extends FileHandler {
     	
 	}
 	
-	private String createResultTable(CrawlResult result) {
+	private String createDetailsTable() {
+		return "";
+	}
+	
+	private String createSummaryTable(CrawlResult result) {
 		StringBuffer buffer = new StringBuffer();
 		
 		buffer.append("<table border=\"1\">");
-
-		/*
-		buffer.append("<tr>");
-	    buffer.append("<th>Id</th>");
-	    buffer.append("<th>Startet</th>");
-	    buffer.append("<th>Ferdig</th>");
-	    buffer.append("<th>Resultat</th>");
-		buffer.append("</tr>");
-		*/
 		
 		buffer.append("<tr>");
 		buffer.append("<td>Startet</td>");

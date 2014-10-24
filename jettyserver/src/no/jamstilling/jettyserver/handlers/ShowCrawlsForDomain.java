@@ -32,7 +32,6 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
     		
     		String domain = request.getParameter("domain");
     		System.out.println(domain);
-    		//domain = "tidstankar.no";
 
     		response.setContentType("text/html;charset=utf-8");
 	        response.setStatus(HttpServletResponse.SC_OK);
@@ -43,12 +42,11 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 		        StorageHandler storage = new StorageHandler();
 		        storage.connect(domain);
 	
-		        List<Crawl> finishedCrawls = storage.getFinishedCrawls();
 		        List<Crawl> inProgressCrawls = storage.getUnfinishedCrawls();
+		        List<Crawl> finishedCrawls = storage.getFinishedCrawls();
 		        
-		        String finishedText = createFinishedText(finishedCrawls, domain);
 		        String inProgressText = createInProgressText(inProgressCrawls, domain);
-		//        String inProgressCrawlsTable = createTable(inProgressCrawls, domain);
+		        String finishedText = createFinishedText(finishedCrawls, domain);
 		        
 		        String fileContent = getFileContent();
 	

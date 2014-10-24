@@ -13,9 +13,11 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,24 +27,25 @@ public class FileWatcher {
 	static final Logger logger = LogManager.getLogger(FileWatcher.class.getName());
 
 	private final static WatchService watcher = getWatcher();
-	private final static Map<WatchKey, Path> watching=new HashMap<WatchKey, Path>();
+	private final static Set<Path> areWatched = new HashSet<Path>();
 	
 	private final static Map<String, List<FileHandler>> fileHandlers = new HashMap<String, List<FileHandler>>();
 	
-	public static void registerFile(Path path, FileHandler handler) throws IOException {
+	public static synchronized void registerFile(Path path, FileHandler handler) throws IOException {
 		Path catalog = path.getParent();
-		WatchKey key = catalog.register(watcher, ENTRY_MODIFY);	
-		watching.put(key, path);
+		if(!areWatched.contains(catalog)) {
+			areWatched.add(catalog);
+			catalog.register(watcher, ENTRY_MODIFY);	
+		}
 		
 		synchronized (fileHandlers) {
-			String absName = path.toFile().getAbsolutePath();
 			
-			if(!fileHandlers.containsKey(absName)) {
+			if(!fileHandlers.containsKey(path)) {
 				LinkedList<FileHandler> list = new LinkedList<FileHandler>();
-				fileHandlers.put(absName, list);
+				fileHandlers.put(path.getFileName().toString(), list);
 			}
 			
-			fileHandlers.get(absName).add(handler);
+			fileHandlers.get(path.getFileName().toString()).add(handler);
 		}
 	}
 
@@ -50,20 +53,25 @@ public class FileWatcher {
 		for (;;) {			 
             try {
                 WatchKey key = watcher.take();
-                Thread.sleep(20);
+                Thread.sleep(50);
 				
 				List<WatchEvent<?>> events = key.pollEvents();
 				key.reset();
-				
-				Path changedPath=watching.get(key);
-				String absName = changedPath.toFile().getAbsolutePath();
-				synchronized (fileHandlers) {
-					if(fileHandlers.containsKey(absName)) {
-						for(FileHandler handler : fileHandlers.get(absName)) {
-							handler.fileChanged(changedPath);
+
+				for(WatchEvent event : events) {
+					WatchEvent<Path> ev = (WatchEvent<Path>)event;
+					Path filename = ev.context();
+					System.out.println(filename);
+					synchronized (fileHandlers) {
+						if(fileHandlers.containsKey(filename.getFileName().toString())) {
+							for(FileHandler handler : fileHandlers.get(filename.getFileName().toString())) {
+								handler.fileChanged(filename);
+							}
 						}
 					}
+						
 				}
+		
             } catch (InterruptedException x) {
             }
 		}

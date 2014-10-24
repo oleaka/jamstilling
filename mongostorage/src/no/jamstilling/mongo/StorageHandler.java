@@ -270,13 +270,41 @@ public class StorageHandler {
 		return null;
 	}
 	
+	public String getDetailResult() {
+
+		BasicDBObject searchQuery = new BasicDBObject(CRAWLID, crawlId);
+		DBObject fields = new BasicDBObject("url", 1);
+		//BasicDBObject orderBy = new BasicDBObject("wordcount", -1);
+		
+		DBCursor cursor = resultCollection.find(searchQuery);//.sort(orderBy);
+		
+		try {
+			while(cursor.hasNext()) {
+				DBObject row = cursor.next();
+				String url = (String) row.get(URL);
+					
+				String[] split = url.split("/");
+			
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+				
+		return "";
+	}
+	
 	public CrawlResult getResult() {
 		
 		BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
 		DBObject doc = crawlsCollection.findOne(searchQuery);
 		String started = (String) doc.get(STARTED);
+		if(started == null) {
+			started = "";
+		}
 		String ended = (String) doc.get(ENDED);
-		
+		if(ended == null) {
+			ended = "";
+		}
 		int totalPages = resultCollection.find(searchQuery).count();
 		
 		DBObject match = new BasicDBObject("$match", new BasicDBObject(CRAWLID, crawlId));
