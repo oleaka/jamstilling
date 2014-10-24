@@ -2,6 +2,7 @@ package no.jamstilling.jettyserver.handlers;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -10,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import no.jamstilling.mongo.StorageHandler;
 import no.jamstilling.mongo.result.Crawl;
 import no.jamstilling.mongo.result.CrawlResult;
+import no.jamstilling.mongo.result.PartialCrawlResult;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,9 +50,9 @@ public class ShowResultHandler  extends FileHandler {
 
 		        CrawlResult summaryResult = storage.getResult();
 		        String summaryTable = createSummaryTable(summaryResult);
-		        storage.getDetailResult();				
 
-		        String detailsTable = createDetailsTable();
+		        List<PartialCrawlResult> detailResult = storage.getDetailResult(2);				
+		        String detailsTable = createDetailsTable(detailResult);
 		        
 		        String fileContent = getFileContent();
 		        fileContent = fileContent.replaceAll("%DOMAIN%", domain);
@@ -66,8 +68,29 @@ public class ShowResultHandler  extends FileHandler {
     	
 	}
 	
-	private String createDetailsTable() {
-		return "";
+	private String createDetailsTable(List<PartialCrawlResult> detailResult) {
+		StringBuffer buffer = new StringBuffer();
+		
+		buffer.append("<table border=\"1\">");
+		
+		buffer.append("<tr>");
+	    buffer.append("<th>Del av domene</th>");
+	    buffer.append("<th>Antall sider</th>");
+	    buffer.append("<th>Nynorsk</th>");
+	    buffer.append("<th>Bokmål</th>");
+		buffer.append("</tr>");
+
+		
+		for(PartialCrawlResult res : detailResult) {
+			buffer.append("<tr>");
+			buffer.append("<td>" + res.url + "</td>");
+			buffer.append("<td>" + res.totalPages + "</td>");
+			buffer.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / (res.totalNNWords+res.totalBMWords))) * 100.0)+ "%</td>");
+			buffer.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / (res.totalNNWords+res.totalBMWords))) * 100.0) + "%</td>");
+			buffer.append("</tr>");
+		}		
+		
+		return buffer.toString();
 	}
 	
 	private String createSummaryTable(CrawlResult result) {

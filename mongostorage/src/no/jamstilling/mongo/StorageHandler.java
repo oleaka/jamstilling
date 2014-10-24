@@ -7,12 +7,16 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import no.jamstilling.mongo.result.Crawl;
 import no.jamstilling.mongo.result.CrawlResult;
+import no.jamstilling.mongo.result.PartialCrawlResult;
+import no.jamstilling.mongo.result.UrlTree;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -270,27 +274,71 @@ public class StorageHandler {
 		return null;
 	}
 	
-	public String getDetailResult() {
+	public List<PartialCrawlResult> getDetailResult(int level) {
+		List<PartialCrawlResult> resList = new LinkedList<PartialCrawlResult>();
 
 		BasicDBObject searchQuery = new BasicDBObject(CRAWLID, crawlId);
 		DBObject fields = new BasicDBObject("url", 1);
-		//BasicDBObject orderBy = new BasicDBObject("wordcount", -1);
 		
-		DBCursor cursor = resultCollection.find(searchQuery);//.sort(orderBy);
+		DBCursor cursor = resultCollection.find(searchQuery);
+
+		UrlTree urlTree = new UrlTree();
 		
 		try {
 			while(cursor.hasNext()) {
 				DBObject row = cursor.next();
 				String url = (String) row.get(URL);
 					
-				String[] split = url.split("/");
-			
+				urlTree.addUrl(url);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-				
-		return "";
+		
+		HashMap<String, Integer> urlParts = urlTree.getParts(level);
+		for(String url : urlParts.keySet()) {
+			PartialCrawlResult pRes = getPartialResult(url,  urlParts.get(url));
+			resList.add(pRes);
+		}
+		
+		return resList;
+	}
+	
+	private PartialCrawlResult getPartialResult(String url, int totalPages) {
+		
+		Pattern regex = Pattern.compile("/.*" + url + ".*/"); 
+//		searchQuery.put(URL, regex);
+//		searchQuery.append(CRAWLID, crawlId);
+		
+		DBObject match = new BasicDBObject("$match", new BasicDBObject(CRAWLID, crawlId).append(URL, regex));
+
+		DBObject fields = new BasicDBObject("wordcount", 1);
+		fields.put("wordcountNN", 1);
+		fields.put("wordcountBM", 1);
+		fields.put("wordcountEN", 1);		
+		DBObject project = new BasicDBObject("$project", fields );
+
+		DBObject groupFields = new BasicDBObject( "_id", null);
+		groupFields.put("sumTotal", new BasicDBObject( "$sum", "$wordcount"));
+		groupFields.put("sumNN", new BasicDBObject( "$sum", "$wordcountNN"));
+		groupFields.put("sumBM", new BasicDBObject( "$sum", "$wordcountBM"));
+		groupFields.put("sumEN", new BasicDBObject( "$sum", "$wordcountEN"));
+		DBObject group = new BasicDBObject("$group", groupFields);
+
+		List<DBObject> pipeline = Arrays.asList(match, project, group);
+		AggregationOutput output = resultCollection.aggregate(pipeline);
+
+		for (DBObject result : output.results()) {
+
+			Number total = (Number) result.get("sumTotal");
+			Number nn = (Number) result.get("sumNN");
+			Number bm = (Number) result.get("sumBM");
+			Number en = (Number) result.get("sumEN");
+			
+			return new PartialCrawlResult(url, totalPages, total.longValue(), nn.longValue(), bm.longValue(), en.longValue());
+			
+		}	
+		return new PartialCrawlResult(url, totalPages, -1, -1, -1, -1);
 	}
 	
 	public CrawlResult getResult() {
