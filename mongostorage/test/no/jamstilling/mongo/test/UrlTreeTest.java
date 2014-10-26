@@ -30,7 +30,7 @@ public class UrlTreeTest {
 	//	tree.printTree();
 	//tree.printSubParts();
 		
-		 HashMap<String, Integer> urlMap = tree.getParts(2);
+		 HashMap<String, Integer> urlMap = tree.getParts(2, "");
 		
 		for(String url : urlMap.keySet()) {
 			System.out.println(url + " => " + urlMap.get(url));

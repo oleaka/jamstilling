@@ -1,6 +1,10 @@
 package no.jamstilling.jettyserver.handlers;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -24,6 +28,28 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 		super(fileName);
 		this.urlToHandle = urlToHandle;
 	}
+
+	private String cleanUrl(String url) {
+		
+		if(!url.startsWith("http://") && !url.startsWith("https://")) {
+			url = "http://" + url;
+		}
+		if(url.endsWith("/")) {
+			url = url.substring(0, url.length()-1);
+		}
+		return url;
+	}
+
+	
+	private String getDomain(String url) throws MalformedURLException {
+		URL myUrl = new URL(cleanUrl(url));
+		String host = myUrl.getHost();
+		if(host.startsWith("www.")) {
+			return host.substring(4);
+		}
+		return host;
+
+	}
 	
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
@@ -31,13 +57,15 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
     	if(urlToHandle.equals(target)) {
     		
     		String domain = request.getParameter("domain");
-    		System.out.println(domain);
-
+    		
     		response.setContentType("text/html;charset=utf-8");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        baseRequest.setHandled(true);
 	
     		try {
+        		System.out.println("arg: " + domain);
+    			domain = getDomain(domain);
+        		System.out.println("using: " + domain);
 	
 		        StorageHandler storage = new StorageHandler();
 		        storage.connect(domain);
@@ -95,7 +123,7 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 			buffer.append("<td>" + crawl.crawlId + "</td>");
 			buffer.append("<td>" + crawl.started + "</td>");
 			buffer.append("<td>" + crawl.ended + "</td>");
-			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId + "\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
+			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId +"&filter=&level=2\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
 			
 			buffer.append("</tr>");
 		}

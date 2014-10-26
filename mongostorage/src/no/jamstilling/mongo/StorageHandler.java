@@ -223,6 +223,7 @@ public class StorageHandler {
 	}
 	
 	public boolean alreadyParsed(String url) {
+		url = Util.safe(url);
 		System.out.println("aleadyParsed: " + url);
 		BasicDBObject query = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
 
@@ -269,18 +270,25 @@ public class StorageHandler {
 		if(myDoc != null) {
 			String url = (String) myDoc.get(URL);
 			linkCollection.remove(myDoc);
-			return url;
+			return Util.unsafe(url);
 		} 
 		return null;
 	}
 	
-	public List<PartialCrawlResult> getDetailResult(int level) {
+	public List<PartialCrawlResult> getDetailResult(int level, String filter) {
+		filter = Util.safe(filter);
+		System.out.println("getDetailResult(level:" + level + ", filter:" + filter +")");
 		List<PartialCrawlResult> resList = new LinkedList<PartialCrawlResult>();
 
 		BasicDBObject searchQuery = new BasicDBObject(CRAWLID, crawlId);
+		if(filter != null && !"".equals(filter)) {
+			Pattern regex = Pattern.compile("/.*" + filter + ".*/"); 
+			searchQuery.append(URL, regex);
+		}
+		
 		DBObject fields = new BasicDBObject("url", 1);
 		
-		DBCursor cursor = resultCollection.find(searchQuery);
+		DBCursor cursor = resultCollection.find(searchQuery, fields);
 
 		UrlTree urlTree = new UrlTree();
 		
@@ -289,13 +297,13 @@ public class StorageHandler {
 				DBObject row = cursor.next();
 				String url = (String) row.get(URL);
 					
-				urlTree.addUrl(url);
+				urlTree.addUrl(Util.unsafe(url));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		HashMap<String, Integer> urlParts = urlTree.getParts(level);
+		HashMap<String, Integer> urlParts = urlTree.getParts(level, filter);
 		for(String url : urlParts.keySet()) {
 			PartialCrawlResult pRes = getPartialResult(url,  urlParts.get(url));
 			resList.add(pRes);
@@ -305,11 +313,10 @@ public class StorageHandler {
 	}
 	
 	private PartialCrawlResult getPartialResult(String url, int totalPages) {
+		url = Util.safe(url);
+		System.out.println("getPartialResult(url:" + url + ", totalPages:" + totalPages +")");
 		
 		Pattern regex = Pattern.compile("/.*" + url + ".*/"); 
-//		searchQuery.put(URL, regex);
-//		searchQuery.append(CRAWLID, crawlId);
-		
 		DBObject match = new BasicDBObject("$match", new BasicDBObject(CRAWLID, crawlId).append(URL, regex));
 
 		DBObject fields = new BasicDBObject("wordcount", 1);
@@ -335,13 +342,21 @@ public class StorageHandler {
 			Number bm = (Number) result.get("sumBM");
 			Number en = (Number) result.get("sumEN");
 			
-			return new PartialCrawlResult(url, totalPages, total.longValue(), nn.longValue(), bm.longValue(), en.longValue());
+			return new PartialCrawlResult(Util.unsafe(url), totalPages, total.longValue(), nn.longValue(), bm.longValue(), en.longValue());
 			
 		}	
-		return new PartialCrawlResult(url, totalPages, -1, -1, -1, -1);
+		return new PartialCrawlResult(Util.unsafe(url), totalPages, -1, -1, -1, -1);
 	}
 	
-	public CrawlResult getResult() {
+	public CrawlResult getResult(String filter) {
+		filter = Util.safe(filter);
+		BasicDBObject matchObject = new BasicDBObject(CRAWLID, crawlId);
+		if(filter != null && !"".equals(filter)) {
+			Pattern regex = Pattern.compile("/.*" + filter + ".*/"); 
+			matchObject.append(URL, regex);
+		}
+		
+		DBObject match = new BasicDBObject("$match", matchObject);
 		
 		BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
 		DBObject doc = crawlsCollection.findOne(searchQuery);
@@ -353,9 +368,9 @@ public class StorageHandler {
 		if(ended == null) {
 			ended = "";
 		}
-		int totalPages = resultCollection.find(searchQuery).count();
+		int totalPages = resultCollection.find(matchObject).count();
 		
-		DBObject match = new BasicDBObject("$match", new BasicDBObject(CRAWLID, crawlId));
+//		DBObject match = new BasicDBObject("$match", new BasicDBObject(CRAWLID, crawlId));
 		DBObject fields = new BasicDBObject("wordcount", 1);
 		fields.put("wordcountNN", 1);
 		fields.put("wordcountBM", 1);
@@ -379,13 +394,19 @@ public class StorageHandler {
 			Number bm = (Number) result.get("sumBM");
 			Number en = (Number) result.get("sumEN");
 			
-			return new CrawlResult(crawlId, domain, started, ended, totalPages, total.longValue(), nn.longValue(), bm.longValue(), en.longValue());
+			String url = domain;
+			if(filter != null && !"".equals(filter)) {
+				url = filter;
+			}
+			
+			return new CrawlResult(crawlId, Util.unsafe(url), started, ended, totalPages, total.longValue(), nn.longValue(), bm.longValue(), en.longValue());
 			
 		}	
 		return null;		
 	}
 	
 	public void insertUnparsedPage(String url) {
+		url = Util.safe(url);
 		System.out.println("insertUnparsedPage: " + url);
 
 		if(!alreadyParsed(url)) {
@@ -395,6 +416,7 @@ public class StorageHandler {
 	}
 	
 	public void insertPageFailed(String url, String message) {
+		url = Util.safe(url);
 		BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url)
 				.append("error", message);
 
@@ -402,6 +424,7 @@ public class StorageHandler {
 	}
 	
 	public void insertPageResult(String url, String content, int wordCount, int wordCountNN, int wordCountBM, int wordCountEN) {
+		url = Util.safe(url);
 		BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url)
         .append("wordcount", wordCount)
         .append("wordcountNN", wordCountNN)

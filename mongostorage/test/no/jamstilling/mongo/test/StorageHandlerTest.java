@@ -46,7 +46,7 @@ public class StorageHandlerTest {
 			
 			storage.crawlDone();
 			
-			CrawlResult res = storage.getResult();
+			CrawlResult res = storage.getResult("");
 			
 			System.out.println(res);
 			
@@ -63,7 +63,7 @@ public class StorageHandlerTest {
 			storage.connect("janneeikeland.blogg.no");
 			storage.continueCrawl("1");
 				
-			CrawlResult res = storage.getResult();
+			CrawlResult res = storage.getResult("");
 			
 			System.out.println(res);
 	

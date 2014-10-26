@@ -22,23 +22,14 @@ public class UrlTree extends UrlTreeNode {
 		addChild(split);
 	}
 	
-	public HashMap<String, Integer> getParts(int level) {
+	public HashMap<String, Integer> getParts(int level, String filter) {
 
 		HashMap<String, Integer> result = new HashMap<String, Integer>();
 		
-		/*
-		if(level == 0) {
-			for(UrlTreeNode child : children) {
-				if(child.numberOfChildren > 0) {
-					result.put(child.myPart, child.numberOfChildren);
-				}
-			}
-			return result;
-		}
-		*/
 		for(UrlTreeNode child : children) {
-			child.getParts(level-1, result, "");
+			child.getParts(level-1, result, "", filter);
 		}
+		
 		return result;
 	}
 	

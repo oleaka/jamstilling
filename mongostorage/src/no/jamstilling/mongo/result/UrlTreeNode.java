@@ -49,23 +49,31 @@ public class UrlTreeNode {
 		}
 	}
 	
-	protected void getParts(int level, HashMap<String, Integer> urls, String soFar) {
+	private void checkAdd(HashMap<String, Integer> urls, String url, String filter, int numberOfChildren) {
+		if(url.contains(filter)) {
+			urls.put(url, numberOfChildren);
+		}
+ 	}
+	
+	protected void getParts(int level, HashMap<String, Integer> urls, String soFar, String filter) {
 		if(level < 0) {
 			return;
 		}
 		if(level == 0 && numberOfChildren > 0) {
 			if("".equals(soFar)) {
-				urls.put(myPart, numberOfChildren);
+				checkAdd(urls, myPart, filter, numberOfChildren);
 			} else {
-				urls.put(soFar + "/" + myPart, numberOfChildren);					
+				checkAdd(urls, soFar + "/" + myPart, filter, numberOfChildren);
 			}
 			return;
+		} else if(level == 0 && numberOfChildren == 0) {
+			checkAdd(urls, soFar + "/" + myPart, filter, numberOfChildren);			
 		}
 		for(UrlTreeNode child : children) {
 			if("".equals(soFar)) {
-				child.getParts(level-1, urls, myPart);
+				child.getParts(level-1, urls, myPart, filter);
 			} else {
-				child.getParts(level-1, urls, soFar + "/" + myPart);
+				child.getParts(level-1, urls, soFar + "/" + myPart, filter);
 			}
 		}
 	}

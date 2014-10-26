@@ -54,7 +54,7 @@ public class JettyServer {
 		HandlerList handlers = new HandlerList();
 	
 		FileContentHandler testPage = new FileContentHandler("/test", "pages/test.html");
-		
+	
 		FileContentHandler frontPage = new FileContentHandler("/", "pages/frontpage.html");
 		StartCrawlHandler startCrawlHandler = new StartCrawlHandler("/crawl_start");
 		ShowCrawlsForDomain crawlsForDomain = new ShowCrawlsForDomain("/crawlsfordomain", "pages/crawlsfordomain.html");
