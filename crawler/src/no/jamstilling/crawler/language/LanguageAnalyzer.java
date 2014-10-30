@@ -2,8 +2,12 @@ package no.jamstilling.crawler.language;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import no.jamstilling.crawler.ParseResult;
+import no.jamstilling.mongo.result.SinglePage;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -13,9 +17,19 @@ public class LanguageAnalyzer {
 	
 	static DecimalFormat twoDForm = new DecimalFormat("#.##");
       
-	public static String[] nynorskOrd = {"ein", "korleis", "ikkje", "eg", "eit", "ho", "frå", "blei", "berre", "no", "noko", "vere", "nokon", "sjølv", "vore", "gjekk", "meir", "kva", "fekk", "heile", "saman", "fleire", "mykje"};	
-	public static String[] bokmaalOrd = {"en", "hvordan", "ikke", "jeg", "et", "hun", "fra", "vart", "bare", "nå", "noe", "være", "noen", "selv", "vært", "gikk", "mer", "hva", "fikk", "hele", "sammen", "flere", "mye"};
-	public static String[] engelskOrd = {"one", "they", "not", "she", "from", "only", "some", "now", "self", "said", "walk", "walked", "more", "where", "together", "whole"};
+	public static String[] nynorskOrd = null;
+	public static String[] bokmaalOrd = null;
+	public static String[] engelskOrd = null;
+	
+	public LanguageAnalyzer(Map<String, List<String>> words) {
+		List<String> nnWords = words.get("nn");
+		nynorskOrd = nnWords.toArray(new String[nnWords.size()]);
+		List<String> bmWords = words.get("bm");
+		bokmaalOrd = bmWords.toArray(new String[bmWords.size()]);
+		List<String> enWords = words.get("en");
+		engelskOrd = enWords.toArray(new String[enWords.size()]);
+	
+	}	
 	
 	public static ParseResult analyzeBody(String body, String url) {
 		ParseResult res = analyzeTextBlock(url, body);		
@@ -38,35 +52,43 @@ public class LanguageAnalyzer {
 
 		ParseResult res = analyzeTextBlock(url, body);
 		
-		//report(res, url, foundText);
-		
 		return res;
 	}	
 
+	private static List<String> splitWords(String text) {
+
+		List<String> words = new LinkedList<String>();
+		StringBuilder stringBuffer = new StringBuilder(text);
+
+		String SWord = "";
+		for(int i=0; i<stringBuffer.length(); i++){
+			Character charAt = stringBuffer.charAt(i);
+			if(Character.isAlphabetic(charAt)){
+				SWord = SWord + charAt;
+			}
+			else{
+				if(!SWord.isEmpty()) {
+					words.add(SWord);
+				} 
+				SWord = "";
+			}	
+		}
+		
+		return words;
+	}
+
+	
 	private static ParseResult analyzeTextBlock(String url, String body) {
-		String[] split = body.split(" ");
+		List<String> split = splitWords(body);
+	//	String[] split = body.split(" ");
 		
 		int nynorsk = occurenceCount(split, nynorskOrd);
 		int bokmaal = occurenceCount(split, bokmaalOrd);
 		int english = occurenceCount(split, engelskOrd);
 		
-		return new ParseResult(url, body, split.length,  nynorsk, bokmaal, english);	
+		return new ParseResult(url, body, split.size(),  nynorsk, bokmaal, english);	
 	}
-		
-	/*
-	private static void report(ParseResult res, String url, ArrayList<String> text) {
-		
-		DomeneParser.display.setText(url + " - nn: " +  String.format("%.2f", res.getNynorskProsent()*100.0) + "% bm:" + String.format("%.2f", res.getBokmaalProsent()*100.0) +"%");
-		try {
-			String lokalFil = WebCreator.createPage(res, url, text, res.getHits(LanguageDefinitions.NYNORSK), res.getWords(LanguageDefinitions.NYNORSK), 
-					res.getHits(LanguageDefinitions.BOKMAAL), res.getWords(LanguageDefinitions.BOKMAAL), res.getHits(LanguageDefinitions.ENGLISH), res.getWords(LanguageDefinitions.ENGLISH));
-			res.setLocalLink(lokalFil);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		
-	}
-	*/
+
 	private static String extract(ArrayList<String> foundText) {
 		
 		StringBuffer buffer = new StringBuffer();
@@ -102,19 +124,28 @@ public class LanguageAnalyzer {
 	}
 
 	
-	private static int occurenceCount(String[] words, String[] lookFor) {
-		if(words == null || words.length == 0 || lookFor == null || lookFor.length == 0) {
+	private static int occurenceCount(List<String> words, String[] lookFor) {
+		if(words == null || words.size() == 0 || lookFor == null || lookFor.length == 0) {
 			return 0;
 		} 
 
 		int counter = 0;
-		for(int i = 0; i < words.length; i++) {
+		for(String word : words) {
+			for(String lookForWord : lookFor) {
+				if(word.equalsIgnoreCase(lookForWord)) {
+					counter++;
+				}
+			}
+		}
+		/*		
+		for(int i = 0; i < words.size(); i++) {
 			for(int j = 0; j < lookFor.length; j++) {
 				if(words[i].equalsIgnoreCase(lookFor[j])) {
 					counter++;
 				}
 			}
 		}
+		*/
 		return counter;
 	}
 }

@@ -1,13 +1,17 @@
 package no.jamstilling.mongo.test;
 
 import java.net.UnknownHostException;
+import java.util.List;
 
 import junit.framework.Assert;
 
 import no.jamstilling.mongo.StorageHandler;
+import no.jamstilling.mongo.Util;
 import no.jamstilling.mongo.result.CrawlResult;
 
 import org.junit.Test;
+import no.jamstilling.mongo.result.PartialCrawlResult;
+
 
 public class StorageHandlerTest {
 
@@ -17,7 +21,7 @@ public class StorageHandlerTest {
 		StorageHandler storage = new StorageHandler();
 		try {
 			storage.connect("testinserts");
-			storage.newCrawl();
+			storage.newCrawl(Util.getDefaultWords());
 			
 			String urlToInsert = "http://www.testinserts.com";
 			storage.insertUnparsedPage(urlToInsert);
@@ -39,7 +43,7 @@ public class StorageHandlerTest {
 		StorageHandler storage = new StorageHandler();
 		try {
 			storage.connect("testinserts");
-			storage.newCrawl();
+			storage.newCrawl(Util.getDefaultWords());
 			
 			storage.insertPageResult("http://www.testinserts.com", "bla bla", 2147483600, 2147483600, 8, 0);
 			storage.insertPageResult("http://www.testinserts.com/eple", "bla bla bla", 2147483600, 10, 8, 2);
@@ -73,5 +77,60 @@ public class StorageHandlerTest {
 		}
 	
 	}
+	
+	@Test
+	public void testGetDetailsResult() {
+		StorageHandler storage = new StorageHandler();
+		try {
+			storage.connect("test_details_result_db");
+			storage.newCrawl(Util.getDefaultWords());
+			
+			storage.insertPageResult("http://www.smp.no", "bla bla", 20, 2, 10, 2);
+			storage.insertPageResult("http://www.smp.no/test/bla1.html?bla1=bla1&bla2=bla2", "bla bla", 20, 2, 10, 2);
+			storage.insertPageResult("http://www.smp.no/test/bla2.html?eple=kake&banan=kake", "bla bla", 20, 2, 10, 2);
+			storage.insertPageResult("http://www.smp.no/test/mat/bla1.html?bla1=bla1&bla2=bla2", "bla bla", 20, 2, 10, 2);
+			storage.insertPageResult("http://www.smp.no/test/mat/bla2.html?eple=kake&banan=kake", "bla bla", 20, 2, 10, 2);
+			
+			List<PartialCrawlResult> resList = storage.getDetailResult(3, "www.smp.no/test");
+			
+			for(PartialCrawlResult pRes : resList) {
+				System.out.println(pRes.toString());
+			}
+	
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
+	}
+			
+	
+	@Test
+	public void testGetResults() {
+		StorageHandler storage = new StorageHandler();
+		try {
+			storage.connect("test_result_db");
+			storage.newCrawl(Util.getDefaultWords());
+			
+			storage.insertPageResult("http://www.smp.no", "bla bla", 20, 2, 10, 2);
+			storage.insertPageResult("http://www.smp.no/test/bla1.html?bla1=bla1&bla2=bla2", "bla bla", 20, 2, 10, 2);
+			storage.insertPageResult("http://www.smp.no/test/bla2.html?eple=kake&banan=kake", "bla bla", 20, 2, 10, 2);
+			
+			CrawlResult unfilteredresult = storage.getResult("");
+			
+			CrawlResult filteredresult = storage.getResult("http://www.smp.no/test/");
+
+			System.out.println("unfiltered");
+			System.out.println(unfilteredresult.toString());
+			System.out.println("filtered");
+			System.out.println(filteredresult.toString());
+			
+			Assert.assertEquals(3, unfilteredresult.totalPages);
+			Assert.assertEquals(2, filteredresult.totalPages);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
+	}
+	
+	
 }
 

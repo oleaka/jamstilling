@@ -19,7 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 
-public class ShowResultHandler  extends FileHandler {
+public class ShowResultHandler extends FileHandler {
 
 	static final DecimalFormat df = new DecimalFormat("#.00");
 	static final Logger logger = LogManager.getLogger(ShowResultHandler.class.getName());
@@ -62,14 +62,14 @@ public class ShowResultHandler  extends FileHandler {
 		        String summaryTable = createSummaryTable(summaryResult);
 
 		        List<PartialCrawlResult> detailResult = storage.getDetailResult(Integer.parseInt(level), filter);				
-		        String detailsTable = createDetailsTable(detailResult, domain, crawlId, Integer.parseInt(level) + 1);
-		        String detailsPagesTable = createDetailPagesTable(detailResult, domain, crawlId);
+		        String detailsSinglePagesTable = createSinglePagesTable(detailResult, domain, crawlId);
+		        String detailsSubpartsTable = createSubpartsDetailsTable(detailResult, domain, crawlId, Integer.parseInt(level) + 1);
 		        
 		        String fileContent = getFileContent();
 		        fileContent = fileContent.replaceAll("%DOMAIN%", filter);
 		        fileContent = fileContent.replace("%SUMMARY_TABLE%", summaryTable);
-		        fileContent = fileContent.replace("%DETAILS_TABLE%", detailsTable);
-		        fileContent = fileContent.replace("%PAGES_TABLE%", detailsPagesTable);		        
+		        fileContent = fileContent.replace("%DETAILS_TABLE%", detailsSubpartsTable);
+		        fileContent = fileContent.replace("%PAGES_TABLE%", detailsSinglePagesTable);		        
 		        
 		        response.getWriter().println(fileContent);
 	        } catch (Exception e) {
@@ -79,7 +79,7 @@ public class ShowResultHandler  extends FileHandler {
     	}    	
 	}
 
-	private String createDetailPagesTable(List<PartialCrawlResult> detailResult, String domain, String crawlId) {
+	private String createSinglePagesTable(List<PartialCrawlResult> detailResult, String domain, String crawlId) {
 		StringBuffer buffer1 = new StringBuffer();
 
 		buffer1.append("<table border=\"1\">");	
@@ -96,52 +96,60 @@ public class ShowResultHandler  extends FileHandler {
 	    for(PartialCrawlResult res : detailResult) {
 			if(res.totalPages == 0) {
 				counter ++;
+				//System.out.println(res);
 				buffer1.append("<tr>");
 				buffer1.append("<td>" + res.url + "</td>");
 				buffer1.append("<td>" + res.totalWords + "</td>");
-				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / (res.totalNNWords+res.totalBMWords))) * 100.0)+ "%</td>");
-				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / (res.totalNNWords+res.totalBMWords))) * 100.0) + "%</td>");
-				buffer1.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawlId + "&filter=" + Util.safe(res.url) +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
+				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0)+ "%</td>");
+				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / Math.max(1, (res.totalNNWords+res.totalBMWords)))) * 100.0) + "%</td>");
+				buffer1.append("<td>" + "<form method=POST action=\"resultpage?domain="+domain+"&crawlid="+crawlId + "&url=" + Util.safe(res.url) +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
 				buffer1.append("</tr>");
 			}
 		}		
+	    
+	    buffer1.append("</table>");
+	    
 	    if(counter > 0) {
 	    	return buffer1.toString();
 	    } else {
-	    	return "";
+	    	return "Ingen";
 	    }
 	}
 	
-	private String createDetailsTable(List<PartialCrawlResult> detailResult, String domain, String crawlId, int level) {
+	private String createSubpartsDetailsTable(List<PartialCrawlResult> detailResult, String domain, String crawlId, int level) {
 		StringBuffer buffer2 = new StringBuffer();
 		
 		buffer2.append("<table border=\"1\">");	
 		buffer2.append("<tr>");
 	    buffer2.append("<th>URL</th>");
-	    buffer2.append("<th>Antall sider</th>");
+	    buffer2.append("<th>Undersider</th>");
 	    buffer2.append("<th>Nynorsk</th>");
 	    buffer2.append("<th>Bokmål</th>");
-	    buffer2.append("<th></th>");
+	    buffer2.append("<th>Detaljer</th>");
 		buffer2.append("</tr>");
 	
 		int counter = 0;
 		for(PartialCrawlResult res : detailResult) {
 			if(res.totalPages > 0) {
+
+				//System.out.println(res);
 				counter++;
 				buffer2.append("<tr>");
 				buffer2.append("<td>" + res.url + "</td>");
 				buffer2.append("<td>" + res.totalPages + "</td>");
-				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / (res.totalNNWords+res.totalBMWords))) * 100.0)+ "%</td>");
-				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / (res.totalNNWords+res.totalBMWords))) * 100.0) + "%</td>");
+				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0)+ "%</td>");
+				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0) + "%</td>");
 				buffer2.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawlId + "&filter=" + Util.safe(res.url) + "&level=" + level +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
 				buffer2.append("</tr>");
 			}
 		}		
-		
+
+	    buffer2.append("</table>");
+
 	    if(counter > 0) {
 	    	return buffer2.toString();
 	    } else {
-	    	return "";
+	    	return "Ingen";
 	    }
 
 	}

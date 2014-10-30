@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -23,6 +25,7 @@ import no.jamstilling.crawler.domene.Domene;
 import no.jamstilling.crawler.download.DownloadPDF;
 import no.jamstilling.crawler.language.LanguageAnalyzer;
 import no.jamstilling.mongo.StorageHandler;
+import no.jamstilling.mongo.Util;
 
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -43,12 +46,18 @@ public class Crawl extends Thread {
 	private final ArrayList<String> exceptions;
 	private final long sleepTime;
 	
+	private final LanguageAnalyzer analyzer;
+	
 	public Crawl(Domene domene, String exceptionList, long sleepTime) throws IOException {
 		this.domene = domene;
 		this.sleepTime = sleepTime;
+
+		Map<String, List<String>> words = Util.getDefaultWords();
+		this.analyzer = new LanguageAnalyzer(words);
+		
 		this.storage = new StorageHandler();
 		this.storage.connect(domene.getDomainPart());
-		this.storage.newCrawl();
+		this.storage.newCrawl(words);
 		
 		ArrayList<String> tmpExceptionList = new ArrayList<String>();
 		if(exceptionList != null && !"".equals(exceptionList)) {

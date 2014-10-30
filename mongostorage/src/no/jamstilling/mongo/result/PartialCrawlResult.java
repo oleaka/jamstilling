@@ -16,4 +16,11 @@ public class PartialCrawlResult {
 		this.totalBMWords = bm;
 		this.totalENWords = en;
 	}
+	
+	public String toString() {
+		return url + " totalPages(" + totalPages + "), totalWords(" 
+				+ totalWords + "), totalNN(" + totalNNWords + "), totalBM(" + totalBMWords + "), totalEN(" + totalENWords + ")";
+	}
+
 }
+
