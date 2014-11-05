@@ -7,10 +7,12 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import no.jamstilling.mongo.result.Crawl;
 import no.jamstilling.mongo.result.CrawlResult;
@@ -39,8 +41,10 @@ public class StorageHandler {
 	static final String CONTENT = "content";
 	
 	private List<ResultBuffer> resultBuffer = new LinkedList<ResultBuffer>();
+	private List<String> nextLinks = new LinkedList<String>();
+	private Map<String, Integer> parsedCache = new HashMap<String, Integer>();
 	
-	static final SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+	static final SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 	
 	static final Logger logger = LogManager.getLogger(StorageHandler.class.getName());
 	
@@ -259,14 +263,46 @@ public class StorageHandler {
 		
 		return res;
 	}
-	
-	public boolean alreadyParsed(String url) {
-		url = Util.safe(url);
-		System.out.println("aleadyParsed: " + url);
 
+	private void cleanParsedCache() {
+		synchronized (parsedCache) {
+		
+			int removeCounter = 1;
+			
+			while(parsedCache.size() > 1500) {
+				List<String> urls = new LinkedList<String>(parsedCache.keySet());
+				for(String url : urls) {
+					if(parsedCache.get(url) == removeCounter) {
+						parsedCache.remove(url);
+					}
+				}
+				removeCounter++;
+			}			
+		}
+	}
+	
+	private boolean alreadyParsed(String url) {
+		url = Util.safe(url);
+		
+	//	System.out.println("pc     " + parsedCache.size());
+		
+		synchronized (parsedCache) {
+			if(parsedCache.containsKey(url)) {
+				parsedCache.put(url, parsedCache.get(url) + 1);
+	//			System.out.println("in cache aleadyParsed: " + url);
+				return true;
+			} else {
+				parsedCache.put(url, 1);
+			}
+		}
+		if(parsedCache.size() > 2000) {
+			cleanParsedCache();
+		}
+		
 		synchronized (resultBuffer) {
 			for(ResultBuffer res : resultBuffer) {
 				if(res.url.equals(url)) {
+					System.out.println("in resultBuffer aleadyParsed: " + url);
 					return true;
 				}
 			}
@@ -274,64 +310,73 @@ public class StorageHandler {
 
 		synchronized (nextLinks) {
 			if(nextLinks.contains(url)) {
+				System.out.println("in nextLink aleadyParsed: " + url);
 				return true;
 			}
 		}
 		
 		BasicDBObject query = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
-		DBCursor cursor = resultCollection.find(query);
-
-		try {
-		   while(cursor.hasNext()) {
-			   return true;
-		   }
-		} finally {
-		   cursor.close();
+		DBObject obj = resultCollection.findOne(query);
+		if(obj != null) {
+			System.out.println("in resultCollection aleadyParsed: " + url);
+			return true;
 		}
 		
-		cursor = linkCollection.find(query);
-
-		try {
-		   while(cursor.hasNext()) {
-			   return true;
-		   }
-		} finally {
-		   cursor.close();
+		obj = linkCollection.findOne(query);
+		if(obj != null) {
+			System.out.println("in linkCollection aleadyParsed: " + url);
+			return true;
 		}
 		
-		cursor = errorCollection.find(query);
-
-		try {
-		   while(cursor.hasNext()) {
-			   return true;
-		   }
-		} finally {
-		   cursor.close();
+		/*
+		obj = errorCollection.findOne(query);
+		if(obj != null) {
+			System.out.println("in errorCollection aleadyParsed: " + url);
+			return true;
 		}
+		*/
 
-		
+		//System.out.println("not aleadyParsed: " + url);
 		return false;
 	} 
 	
-	private List<String> nextLinks = new LinkedList<String>();
-	
 	public synchronized String getNextLink() {
-		System.out.println("getNextLink");
 
 		synchronized (nextLinks) {
+		//	System.out.println("nl     " + nextLinks.size());
+			if(nextLinks.isEmpty()) {
+				BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
+
+				DBCursor cursor = linkCollection.find(searchQuery);
+				List<DBObject> toDelete = new LinkedList<DBObject>();
+				int counter = 0;
+				while(cursor.hasNext() && counter < 100) {
+					DBObject row = cursor.next();
+					String url = (String) row.get(URL);
+					synchronized (nextLinks) {
+						nextLinks.add(url);
+					}					
+					counter++;
+				}
+				
+				for(DBObject obj : toDelete) {
+					linkCollection.remove(obj);					
+				}
+			}
+						
 			if(!nextLinks.isEmpty()) {
 				return Util.unsafe(nextLinks.remove(nextLinks.size()-1));
 			}
 		}
 		
-		BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
-				
+		/*
 		DBObject myDoc = linkCollection.findOne(searchQuery);
 		if(myDoc != null) {
 			String url = (String) myDoc.get(URL);
 			linkCollection.remove(myDoc);
 			return Util.unsafe(url);
 		} 
+		*/
 		return null;
 	}
 	
@@ -582,12 +627,10 @@ public class StorageHandler {
 		
 	public void insertUnparsedPage(String url) {
 		url = Util.safe(url);
-		System.out.println("insertUnparsedPage: " + url);
-		
 		if(!alreadyParsed(url)) {
-			
+			System.out.println("insertUnparsedPage: " + url);
 			synchronized (nextLinks) {
-				if(nextLinks.size() < 100) {
+				if(nextLinks.size() < 1000) {
 					nextLinks.add(url);
 					return;
 				}

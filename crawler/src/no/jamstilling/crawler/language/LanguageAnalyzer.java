@@ -94,7 +94,7 @@ public class LanguageAnalyzer {
 		StringBuffer buffer = new StringBuffer();
 		for(String part : foundText) {
 			buffer.append(part);
-			buffer.append(" ");
+			buffer.append("<p>");
 		}
 		return buffer.toString();
 	}

@@ -10,6 +10,7 @@ public class DownloadPDF {
 
 	public static String getBody(String link) throws IOException {
 
+		System.out.println(link);
 		URL url = new URL(link);
 		
 		PDFTextStripper stripper = new PDFTextStripper();

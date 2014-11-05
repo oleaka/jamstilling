@@ -166,7 +166,11 @@ public class ShowResultHandler extends FileHandler {
 		
 		buffer.append("<tr>");
 		buffer.append("<td>Ferdig</td>");
-		buffer.append("<td>" + result.endTime + "</td>");
+		String endTime = result.endTime;
+		if(endTime == null || "".equals(endTime)) {
+			endTime = "Pågår";
+		}
+		buffer.append("<td>" + endTime + "</td>");
 		buffer.append("</tr>");
 		
 		buffer.append("<tr>");

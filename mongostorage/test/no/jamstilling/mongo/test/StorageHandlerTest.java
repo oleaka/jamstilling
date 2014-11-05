@@ -37,6 +37,55 @@ public class StorageHandlerTest {
 		}
 	}
 
+
+	@Test
+	public void testFlow() {
+		
+		StorageHandler storage = new StorageHandler();
+		try {
+			storage.connect("testflow.no");
+			storage.newCrawl(Util.getDefaultWords());
+			
+			String urlToInsert = "http://www.testflow.no";
+			storage.insertUnparsedPage(urlToInsert);
+
+			String gotLink = storage.getNextLink();
+			Assert.assertEquals(gotLink,  urlToInsert);
+			
+			String unparsed1 = "http://www.testflow.no/bla1.html";
+			String unparsed2 = "http://www.testflow.no/bla2.html";
+			
+			storage.insertUnparsedPage(unparsed1);
+			storage.insertUnparsedPage(unparsed2);
+			
+			String link1 = storage.getNextLink();
+			String link2 = storage.getNextLink();
+			String link3 = storage.getNextLink();
+			
+			System.out.println("l1: " + link1);
+			System.out.println("l2: " + link2);
+			System.out.println("l3: " + link3);
+			
+			storage.insertPageResult(link1, "bla1", 1, 1, 0, 0);
+			storage.insertPageResult(link2, "bla2", 1, 1, 0, 0);
+			
+			
+			storage.crawlDone();
+	//		storage.insertUnparsedPage(url);
+			
+			
+			
+//			String url = storage.getNextLink();
+//			Assert.assertEquals(urlToInsert, url);
+	
+			storage.crawlDone();
+			
+		} catch (Exception e) {
+			System.err.println("failed");
+			e.printStackTrace();
+		}
+	}
+
 	
 	@Test
 	public void testResult() {

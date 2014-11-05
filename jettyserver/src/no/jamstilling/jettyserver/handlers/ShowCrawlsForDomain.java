@@ -5,6 +5,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -106,6 +108,13 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 	}
 	
 	private String createTable(List<Crawl> list, String domain) {
+		
+		Collections.sort(list, new Comparator<Crawl>() {
+			public int compare(Crawl c1, Crawl c2){
+				return Integer.parseInt(c2.crawlId) - Integer.parseInt(c1.crawlId);
+			}
+		});
+		
 		StringBuffer buffer = new StringBuffer();
 		
 		buffer.append("<table border=\"1\">");
@@ -122,7 +131,12 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 			
 			buffer.append("<td>" + crawl.crawlId + "</td>");
 			buffer.append("<td>" + crawl.started + "</td>");
-			buffer.append("<td>" + crawl.ended + "</td>");
+			String endTime = crawl.ended;
+			if(endTime == null || "".equals(endTime)) {
+				endTime = "Pågår";
+			}
+			buffer.append("<td>" + endTime + "</td>");
+			
 			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId +"&filter=&level=2\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
 			
 			buffer.append("</tr>");

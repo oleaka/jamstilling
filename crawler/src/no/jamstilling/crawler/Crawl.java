@@ -256,7 +256,7 @@ public class Crawl extends Thread {
 				continue;
 			}
 
-			System.out.println("findLinks: " + absoluteLink);
+	//		System.out.println("findLinks: " + absoluteLink);
 			
 			if(verifyLink(absoluteLink)) {
 				if(!absoluteLink.equals(url)) {
@@ -287,6 +287,7 @@ public class Crawl extends Thread {
 						System.out.println("pdf");
 						String body = DownloadPDF.getBody(url);
 						if (body != null) {
+							System.out.println("pdfbody: " + body.length());
 							analyzeBody(body, url);
 						}
 					} else {

@@ -81,12 +81,14 @@ public class ShowResultPageHandler extends FileHandler {
 
 		buffer.append("<tr>");
 	    buffer.append("<td>Nynorsk</td>");
-	    buffer.append("<td>" + wordMap.get("nn") +"</td>");
+	    List<String> nn = wordMap.get("nn");
+	    buffer.append("<td>" + (nn != null ? nn.toString() : "Ingen") +"</td>");
 	    buffer.append("</tr>");
 
 	    buffer.append("<tr>");
 	    buffer.append("<td>Bokmål</td>");
-	    buffer.append("<td>" + wordMap.get("bm") +"</td>");
+	    List<String> bm = wordMap.get("bm");
+	    buffer.append("<td>" + (bm != null ? bm.toString() : "Ingen") +"</td>");
 	    buffer.append("</tr>");
 	    
 		
@@ -148,7 +150,7 @@ public class ShowResultPageHandler extends FileHandler {
 	}
 	
 	private static boolean isWord(String word, List<String> compareTo) {
-		if(word == null || word.equals("")) {
+		if(word == null || word.equals("") || compareTo == null) {
 			return false;
 		}
 		for(String comp : compareTo) {

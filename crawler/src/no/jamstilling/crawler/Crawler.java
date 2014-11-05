@@ -11,12 +11,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class Crawler {
 
-	static final Logger logger = LogManager.getLogger(Crawler.class.getName());
+	//static final Logger logger = LogManager.getLogger(Crawler.class.getName());
 	
 	private int sleepTime = 200;
 	
@@ -62,7 +59,8 @@ public class Crawler {
 	 		
 	 		input.close();
 		} catch (IOException ex) {
-			logger.error("Error reading config", ex);
+			ex.printStackTrace();
+	//		logger.error("Error reading config", ex);
 		} 
 	}
 
