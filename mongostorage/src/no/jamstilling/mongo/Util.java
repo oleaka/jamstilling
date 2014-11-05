@@ -3,6 +3,8 @@ package no.jamstilling.mongo;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -32,15 +34,31 @@ public class Util {
 		}
 	}
 	
+/*
+	Properties properties = new Properties();
+InputStream inputStream = new FileInputStream("path/to/file");
+try {
+    Reader reader = new InputStreamReader(inputStream, "UTF-8");
+    try {
+        properties.load(reader);
+    } finally {
+        reader.close();
+    }
+} finally {
+   inputStream.close();
+}
+	*/
+	
 	public static Map<String, List<String>> getDefaultWords() {
 		Properties prop = new Properties();
 		
 		Map<String, List<String>> words = new HashMap<String, List<String>>();
 		try {
-			InputStream input = new FileInputStream("words.properties");
-	 		prop.load(input);
+			InputStream inputStream = new FileInputStream("words.properties");
+			Reader reader = new InputStreamReader(inputStream, "UTF-8");
+			   
+			prop.load(reader);
 
-	 		
 	 		List<String> nnWords = new LinkedList<String>();
 	 		String nn = prop.getProperty("nn");
 	 		String[] split = nn.split(",");
@@ -76,10 +94,12 @@ public class Util {
 	 		words.put("en", enWords);
 	 		
 	 		
-	 		input.close();
+	 		inputStream.close();
+	 		reader.close();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+
 		return words;
 	}
 	

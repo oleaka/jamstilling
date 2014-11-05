@@ -176,12 +176,12 @@ public class ShowResultHandler extends FileHandler {
 
 		buffer.append("<tr>");
 		buffer.append("<td>Nynorsk</td>");
-		buffer.append("<td>" + String.format( "%.2f", (((double) result.totalNNWords / (result.totalNNWords+result.totalBMWords))) * 100.0)+ "%</td>");
+		buffer.append("<td>" + String.format( "%.2f", (((double) result.totalNNWords / Math.max(1,(result.totalNNWords+result.totalBMWords)))) * 100.0)+ "%</td>");
 		buffer.append("</tr>");
 
 		buffer.append("<tr>");
 		buffer.append("<td>Bokmål</td>");
-		buffer.append("<td>" + String.format( "%.2f", (((double) result.totalBMWords / (result.totalNNWords+result.totalBMWords))) * 100.0) + "%</td>");
+		buffer.append("<td>" + String.format( "%.2f", (((double) result.totalBMWords / Math.max(1,(result.totalNNWords+result.totalBMWords)))) * 100.0) + "%</td>");
 		buffer.append("</tr>");
 
 		

@@ -54,6 +54,9 @@ public class ShowResultPageHandler extends FileHandler {
 	
 		        SinglePage singlePage = storage.getURLContent(url);
 		        
+		        Map<String, List<String>> wordMap = storage.getWords();
+		        String keywordTable = createKeywordTable(wordMap);
+		        
 		        String summaryTable = createSummaryTable(singlePage, url);
 		        String markedContent = createMarkedContent(singlePage);
 		        
@@ -61,6 +64,7 @@ public class ShowResultPageHandler extends FileHandler {
 		        fileContent = fileContent.replaceAll("%URL%", url);
 		        fileContent = fileContent.replace("%SUMMARY_TABLE%", summaryTable);
 		        fileContent = fileContent.replace("%CONTENT%", markedContent);
+		        fileContent = fileContent.replace("%KEYWORDS%", keywordTable);
 		        
 		        response.getWriter().println(fileContent);
 	        } catch (Exception e) {
@@ -70,18 +74,38 @@ public class ShowResultPageHandler extends FileHandler {
 		}
 	}
 	
+	private String createKeywordTable(Map<String, List<String>> wordMap) {
+		StringBuffer buffer = new StringBuffer();
+
+		buffer.append("<table border=\"1\">");	
+
+		buffer.append("<tr>");
+	    buffer.append("<td>Nynorsk</td>");
+	    buffer.append("<td>" + wordMap.get("nn") +"</td>");
+	    buffer.append("</tr>");
+
+	    buffer.append("<tr>");
+	    buffer.append("<td>Bokmål</td>");
+	    buffer.append("<td>" + wordMap.get("bm") +"</td>");
+	    buffer.append("</tr>");
+	    
+		
+		buffer.append("</table>");
+		
+		return buffer.toString();
+	}
+	
 	private String createSummaryTable(SinglePage page, String url) {
 		StringBuffer buffer = new StringBuffer();
 
 		buffer.append("<table border=\"1\">");	
-		
-	    /*
-	    buffer.append("<tr>");
-	    buffer.append("<td>URL</td>");
-	    buffer.append("<td>" + url + "</td>");
+
+		buffer.append("<tr>");
+	    buffer.append("<th>Målform</th>");
+	    buffer.append("<th>Nøkkelord</th>");
+	    buffer.append("<th>Prosent</th>");
 	    buffer.append("</tr>");
-	     */
-		
+				
 	    buffer.append("<tr>");
 	    buffer.append("<td>Nynorsk</td>");
 	    buffer.append("<td>" + page.wordcountNN +"</td>");

@@ -1,11 +1,9 @@
 package no.jamstilling.mongo;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,7 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 import no.jamstilling.mongo.result.Crawl;
 import no.jamstilling.mongo.result.CrawlResult;
@@ -39,6 +36,9 @@ public class StorageHandler {
 	static final String STARTED = "started";
 	static final String ENDED = "ended";
 	static final String DONE = "done";
+	static final String CONTENT = "content";
+	
+	private List<ResultBuffer> resultBuffer = new LinkedList<ResultBuffer>();
 	
 	static final SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
@@ -54,6 +54,7 @@ public class StorageHandler {
 	private DBCollection linkCollection = null;
 	private DBCollection errorCollection = null;
 	private DBCollection crawlsCollection = null;
+	private DBCollection contentCollection = null;
 	private DBCollection wordsCollection = null;
 	
 	private String crawlId = null;
@@ -94,6 +95,9 @@ public class StorageHandler {
 		if(!dbConnection.collectionExists("crawlresults")) {
 			dbConnection.createCollection("crawlresults", null);
 		}
+		if(!dbConnection.collectionExists("contentcollection")) {
+			dbConnection.createCollection("contentcollection", null);
+		}
 		if(!dbConnection.collectionExists("links")) {
 			dbConnection.createCollection("links", null);
 		}
@@ -104,12 +108,14 @@ public class StorageHandler {
 		wordsCollection = dbConnection.getCollection("crawlwords");
 		crawlsCollection = dbConnection.getCollection("crawls");
 		resultCollection = dbConnection.getCollection("crawlresults");
+		contentCollection = dbConnection.getCollection("contentcollection");
 		linkCollection = dbConnection.getCollection("links");
 		errorCollection = dbConnection.getCollection("errors");
 		
 	}
 	
 	public void crawlDone() {
+		storeResultBuffer();
 		
 		BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
 
@@ -236,11 +242,43 @@ public class StorageHandler {
 		crawlId = id;
 	}
 	
+	public Map<String, List<String>> getWords() {
+		
+		BasicDBObject query = new BasicDBObject(CRAWLID, crawlId);
+		
+		DBObject obj = wordsCollection.findOne(query);
+	
+		List<String> nn = (List<String>) obj.get("nn");
+		List<String> bm = (List<String>) obj.get("bm");
+		List<String> en = (List<String>) obj.get("en");
+		
+		Map<String, List<String>> res = new HashMap<String, List<String>>();
+		res.put("nn", nn);
+		res.put("bm", bm);
+		res.put("en", en);
+		
+		return res;
+	}
+	
 	public boolean alreadyParsed(String url) {
 		url = Util.safe(url);
 		System.out.println("aleadyParsed: " + url);
-		BasicDBObject query = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
 
+		synchronized (resultBuffer) {
+			for(ResultBuffer res : resultBuffer) {
+				if(res.url.equals(url)) {
+					return true;
+				}
+			}
+		}
+
+		synchronized (nextLinks) {
+			if(nextLinks.contains(url)) {
+				return true;
+			}
+		}
+		
+		BasicDBObject query = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
 		DBCursor cursor = resultCollection.find(query);
 
 		try {
@@ -271,14 +309,23 @@ public class StorageHandler {
 		   cursor.close();
 		}
 
+		
 		return false;
 	} 
+	
+	private List<String> nextLinks = new LinkedList<String>();
 	
 	public synchronized String getNextLink() {
 		System.out.println("getNextLink");
 
-		BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
+		synchronized (nextLinks) {
+			if(!nextLinks.isEmpty()) {
+				return Util.unsafe(nextLinks.remove(nextLinks.size()-1));
+			}
+		}
 		
+		BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
+				
 		DBObject myDoc = linkCollection.findOne(searchQuery);
 		if(myDoc != null) {
 			String url = (String) myDoc.get(URL);
@@ -309,9 +356,32 @@ public class StorageHandler {
 		return new SinglePage("", words, 0, 0, 0, 0);
 	}
 	
+	private String getContent(String url) {
+		System.out.println("getContent(" + url + ")");
+		BasicDBObject searchQuery = new BasicDBObject();
+		searchQuery.put(CRAWLID, crawlId);
+		searchQuery.put(URL, url);
+
+		DBCursor cursor = contentCollection.find(searchQuery);
+		
+		try {
+			while(cursor.hasNext()) {
+				DBObject row = cursor.next();
+				String content = (String) row.get(CONTENT);
+				System.out.println("found content");
+				return content;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			cursor.close();
+		}
+		return "";
+	}
+	
 	public SinglePage getURLContent(String url) {
 		String safeUrl = Util.safe(url);
-		
+		System.out.println("getURLContent(" + url + " => " + safeUrl + ")");
 		SinglePage words = getCrawlWords();
 		
 		BasicDBObject searchQuery = new BasicDBObject();
@@ -323,7 +393,8 @@ public class StorageHandler {
 		try {
 			while(cursor.hasNext()) {
 				DBObject row = cursor.next();
-				String content = (String) row.get("content");
+				String actualUrl  = (String) row.get(URL);
+				String content = getContent(actualUrl);
 				Number wc = (Number) row.get("wordcount");
 				Number wcNN = (Number) row.get("wordcountNN");
 				Number wcBM = (Number) row.get("wordcountBM");
@@ -507,14 +578,21 @@ public class StorageHandler {
 		}
 		
 		return new CrawlResult(crawlId, Util.unsafe(url), timeRes.startTime, timeRes.endTime, totalPages, 0, 0, 0, 0);
-
 	}
 		
 	public void insertUnparsedPage(String url) {
 		url = Util.safe(url);
 		System.out.println("insertUnparsedPage: " + url);
-
+		
 		if(!alreadyParsed(url)) {
+			
+			synchronized (nextLinks) {
+				if(nextLinks.size() < 100) {
+					nextLinks.add(url);
+					return;
+				}
+			}
+			
 			BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
 			linkCollection.insert(doc);
 		}
@@ -529,15 +607,72 @@ public class StorageHandler {
 	}
 	
 	public void insertPageResult(String url, String content, int wordCount, int wordCountNN, int wordCountBM, int wordCountEN) {
+
+		ResultBuffer buffer = new ResultBuffer(Util.safe(url), content, wordCount, wordCountNN, wordCountBM, wordCountEN);
+		synchronized (resultBuffer) {
+			resultBuffer.add(buffer);
+		}
+		if(resultBuffer.size() > 20) {
+			storeResultBuffer();
+		}
+		/*
 		url = Util.safe(url);
 		BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url)
         .append("wordcount", wordCount)
         .append("wordcountNN", wordCountNN)
         .append("wordcountBM", wordCountBM)
-        .append("wordcountEN", wordCountEN)
-        .append("content", content);
+        .append("wordcountEN", wordCountEN);
         
 		resultCollection.insert(doc);
+
+		BasicDBObject contentDoc = new BasicDBObject(CRAWLID, crawlId).append(URL, url).append(CONTENT, content);
+		contentCollection.insert(contentDoc);
+		*/
+	}
+
+	private void storeResultBuffer() {
+		  
+		List<DBObject> documents = new LinkedList<DBObject>();
+		List<DBObject> contentDocuments = new LinkedList<DBObject>();
+				
+		synchronized (resultBuffer) {
+		
+			for(ResultBuffer res : resultBuffer) {
+				BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, res.url)
+				        .append("wordcount", res.wordCount)
+				        .append("wordcountNN", res.wordCountNN)
+				        .append("wordcountBM", res.wordCountBM)
+				        .append("wordcountEN", res.wordCountEN);
+
+				documents.add(doc);
+				
+				BasicDBObject contentDoc = new BasicDBObject(CRAWLID, crawlId).append(URL, res.url).append(CONTENT, res.content);
+				contentDocuments.add(contentDoc);				
+			}
+			resultBuffer.clear();
+		}
+
+		if(documents.size() > 0) {
+			resultCollection.insert(documents);
+			contentCollection.insert(contentDocuments);
+		}
 	}
 	
+	private class ResultBuffer {
+		public final String url;
+		public final String content;
+		public final int wordCount;
+		public final int wordCountNN;
+		public final int wordCountBM;
+		public final int wordCountEN;
+		
+		public ResultBuffer(String url, String content, int wordCount, int wordCountNN, int wordCountBM, int wordCountEN) {
+			this.url = url;
+			this.content = content;
+			this.wordCount = wordCount;
+			this.wordCountNN = wordCountNN;
+			this.wordCountBM = wordCountBM;
+			this.wordCountEN = wordCountEN;
+		}
+	}
 }
