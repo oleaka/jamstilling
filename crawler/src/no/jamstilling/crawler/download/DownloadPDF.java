@@ -14,10 +14,51 @@ public class DownloadPDF {
 		URL url = new URL(link);
 		
 		PDFTextStripper stripper = new PDFTextStripper();
-		PDDocument document = PDDocument.load(url);
-		String text = stripper.getText(document);
-		
-		document.close();
-		return text;
+
+		LoadWithTimeout lwt = new LoadWithTimeout(url);
+		lwt.start();
+	
+		PDDocument document = null;
+		for(int i = 0; i < 60; i++) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+			document = lwt.document;
+			if(document != null) {
+				break;
+			}
+			if(lwt.exception != null) {
+				break;
+			}			
+		}
+	
+		if(document != null) {
+			String text = stripper.getText(document);
+			document.close();
+			return text;
+		}
+		if(lwt.exception != null) {
+			throw lwt.exception;
+		}
+		throw new IOException("Timeout loading " + url);
 	}
+	
+	static class LoadWithTimeout extends Thread {
+		private final URL url;
+		public IOException exception;
+		public PDDocument document = null;
+		public LoadWithTimeout(URL url) {
+			this.url = url;
+		}
+		
+		public void run() {
+			try {
+				document = PDDocument.load(url);
+			} catch (IOException e) {
+				this.exception = e;
+			}
+		}
+	}
+	
 }

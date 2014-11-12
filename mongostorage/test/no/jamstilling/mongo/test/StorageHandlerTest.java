@@ -69,6 +69,13 @@ public class StorageHandlerTest {
 			storage.insertPageResult(link1, "bla1", 1, 1, 0, 0);
 			storage.insertPageResult(link2, "bla2", 1, 1, 0, 0);
 			
+			storage.insertUnparsedPage(unparsed1);
+			storage.insertUnparsedPage(unparsed2);
+
+			link1 = storage.getNextLink();
+			link2 = storage.getNextLink();
+			
+			System.out.println("should be null: " + link1 + ", " + link2);
 			
 			storage.crawlDone();
 	//		storage.insertUnparsedPage(url);

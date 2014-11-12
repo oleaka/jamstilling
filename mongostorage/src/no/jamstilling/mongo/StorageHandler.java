@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +41,11 @@ public class StorageHandler {
 	static final String DONE = "done";
 	static final String CONTENT = "content";
 	
-	private List<ResultBuffer> resultBuffer = new LinkedList<ResultBuffer>();
-	private List<String> nextLinks = new LinkedList<String>();
-	private Map<String, Integer> parsedCache = new HashMap<String, Integer>();
+	private Map<String, ResultBuffer> resultBuffer = new HashMap<String, ResultBuffer>();
+	private Set<String> nextLinks = new HashSet<String>();
+	private Set<String> done = new HashSet<String>();
+
+	//private Map<String, Integer> parsedCache = new HashMap<String, Integer>();
 	
 	static final SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 	
@@ -63,6 +66,11 @@ public class StorageHandler {
 	
 	private String crawlId = null;
 	
+	private Set<String> activeUrls = new HashSet<String>();
+	
+	private Object cachelock = new Object(); 
+	private Object dblock = new Object(); 
+	
 	public StorageHandler() {
 		readConfig();
 	}
@@ -79,10 +87,40 @@ public class StorageHandler {
 	 	
 	 		input.close();
 		} catch (Exception ex) {
-			logger.error("Error reading config", ex);
+		 	logger.error("Error reading config", ex);
 		} 
 	}
 
+	public void connect() throws UnknownHostException {
+		connection = new MongoClient( host, port );
+	}
+	
+	public List<String> getAllDomains() {
+		List<String> allDomains = new LinkedList<String>();
+		
+		List<String> dbs = connection.getDatabaseNames();
+		
+		for(String db : dbs) {
+			try {
+				
+				dbConnection = connection.getDB( db );
+					
+				DBCollection coll = dbConnection.getCollection("crawls");
+				if(coll != null) {					
+					BasicDBObject searchQuery = new BasicDBObject();
+					int crawlCount = coll.find(searchQuery).count();
+					if(crawlCount > 0) {
+						String realName = db.replaceAll("_", "\\.");
+						allDomains.add(realName);
+					}
+				}
+				
+			} catch (Exception e) {}
+		}
+		
+		return allDomains;
+	}
+	
 	public void connect(String db) throws UnknownHostException {
 		domain = db;
 		String mongoCompatibleDB = db.replaceAll("\\.", "_");
@@ -102,18 +140,29 @@ public class StorageHandler {
 		if(!dbConnection.collectionExists("contentcollection")) {
 			dbConnection.createCollection("contentcollection", null);
 		}
-		if(!dbConnection.collectionExists("links")) {
-			dbConnection.createCollection("links", null);
-		}
+	//	if(!dbConnection.collectionExists("links")) {
+	//		dbConnection.createCollection("links", null);
+	//	}
 		if(!dbConnection.collectionExists("errors")) {
 			dbConnection.createCollection("errors", null);
 		}
 		
 		wordsCollection = dbConnection.getCollection("crawlwords");
 		crawlsCollection = dbConnection.getCollection("crawls");
+		
+		BasicDBObject index = new BasicDBObject();
+		index.put(URL, 1);
+		index.put(CRAWLID, -1);
+		
 		resultCollection = dbConnection.getCollection("crawlresults");
+		resultCollection.ensureIndex(index, new BasicDBObject("unique", true));
+		
 		contentCollection = dbConnection.getCollection("contentcollection");
+		contentCollection.ensureIndex(index, new BasicDBObject("unique", true));
+		
 		linkCollection = dbConnection.getCollection("links");
+		linkCollection.ensureIndex(index, new BasicDBObject("unique", true));
+		
 		errorCollection = dbConnection.getCollection("errors");
 		
 	}
@@ -264,8 +313,9 @@ public class StorageHandler {
 		return res;
 	}
 
+	/*
 	private void cleanParsedCache() {
-		synchronized (parsedCache) {
+		synchronized (cachelock) {
 		
 			int removeCounter = 1;
 			
@@ -280,104 +330,208 @@ public class StorageHandler {
 			}			
 		}
 	}
+	*/
 	
 	private boolean alreadyParsed(String url) {
 		url = Util.safe(url);
 		
-	//	System.out.println("pc     " + parsedCache.size());
+		synchronized (done) {
+			if(done.contains(url)) {
+				return true;
+			}
+		}
 		
-		synchronized (parsedCache) {
+		synchronized (activeUrls) {
+			if(activeUrls.contains(url)) {
+				return true;	
+			}			
+		}
+
+		/*
+		if(parsedCache.size() > 2000) {
+			cleanParsedCache();
+		}
+		*/
+		
+		synchronized (cachelock) {
+			/*
 			if(parsedCache.containsKey(url)) {
 				parsedCache.put(url, parsedCache.get(url) + 1);
-	//			System.out.println("in cache aleadyParsed: " + url);
 				return true;
 			} else {
 				parsedCache.put(url, 1);
 			}
-		}
-		if(parsedCache.size() > 2000) {
-			cleanParsedCache();
-		}
-		
-		synchronized (resultBuffer) {
-			for(ResultBuffer res : resultBuffer) {
-				if(res.url.equals(url)) {
-					System.out.println("in resultBuffer aleadyParsed: " + url);
-					return true;
-				}
-			}
-		}
+			*/
 
-		synchronized (nextLinks) {
+			/*
+			if(resultBuffer.containsKey(url)) {
+				System.out.println("in resultBuffer aleadyParsed: " + url);
+				return true;
+			}
+			*/
+
 			if(nextLinks.contains(url)) {
 				System.out.println("in nextLink aleadyParsed: " + url);
 				return true;
 			}
 		}
-		
-		BasicDBObject query = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
-		DBObject obj = resultCollection.findOne(query);
-		if(obj != null) {
-			System.out.println("in resultCollection aleadyParsed: " + url);
-			return true;
-		}
-		
-		obj = linkCollection.findOne(query);
-		if(obj != null) {
-			System.out.println("in linkCollection aleadyParsed: " + url);
-			return true;
-		}
-		
-		/*
-		obj = errorCollection.findOne(query);
-		if(obj != null) {
-			System.out.println("in errorCollection aleadyParsed: " + url);
-			return true;
-		}
-		*/
 
-		//System.out.println("not aleadyParsed: " + url);
+		synchronized (dblock) {				
+
+			BasicDBObject query = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
+			/*
+			DBObject obj = resultCollection.findOne(query);
+			if(obj != null) {
+				System.out.println("in resultCollection aleadyParsed: " + url);
+				return true;
+			}
+			*/
+			
+			DBObject obj = linkCollection.findOne(query);
+			if(obj != null) {
+				System.out.println("in linkCollection aleadyParsed: " + url);
+				return true;
+			}
+		}
+
 		return false;
 	} 
 	
-	public synchronized String getNextLink() {
-
-		synchronized (nextLinks) {
-		//	System.out.println("nl     " + nextLinks.size());
+	public String getNextLink() {
+		boolean empty = false;
+		synchronized (cachelock) {
 			if(nextLinks.isEmpty()) {
-				BasicDBObject searchQuery = new BasicDBObject().append(CRAWLID, crawlId);
-
+				BasicDBObject searchQuery = new BasicDBObject(CRAWLID, crawlId);
 				DBCursor cursor = linkCollection.find(searchQuery);
 				List<DBObject> toDelete = new LinkedList<DBObject>();
 				int counter = 0;
 				while(cursor.hasNext() && counter < 100) {
 					DBObject row = cursor.next();
 					String url = (String) row.get(URL);
-					synchronized (nextLinks) {
-						nextLinks.add(url);
-					}					
+					nextLinks.add(url);
+					
+					toDelete.add(row);
 					counter++;
 				}
+
 				
 				for(DBObject obj : toDelete) {
 					linkCollection.remove(obj);					
 				}
+				
+				if(counter < 100) {
+					empty = true;
+				}
 			}
 						
-			if(!nextLinks.isEmpty()) {
-				return Util.unsafe(nextLinks.remove(nextLinks.size()-1));
+			while(!nextLinks.isEmpty()) {
+				String link = nextLinks.iterator().next();
+				nextLinks.remove(link);
+				if(!done.contains(link)) {
+					activeUrls.add(link);
+					return Util.unsafe(link);
+				}
 			}
 		}
-		
-		/*
-		DBObject myDoc = linkCollection.findOne(searchQuery);
-		if(myDoc != null) {
-			String url = (String) myDoc.get(URL);
-			linkCollection.remove(myDoc);
-			return Util.unsafe(url);
-		} 
-		*/
+		if(!empty) {
+			return getNextLink();
+		}
 		return null;
+	}
+		
+	public void insertUnparsedPage(String url) {
+		url = Util.safe(url);
+		if(!alreadyParsed(url)) {
+			System.out.println("insertUnparsedPage: " + url);
+			synchronized (cachelock) {
+				nextLinks.add(url);
+				
+				if(nextLinks.size() > 1000) {
+					List<DBObject> documents = new LinkedList<DBObject>();
+
+					Iterator<String> it = nextLinks.iterator();
+					List<String> toRemove = new LinkedList<String>();
+					for(int i = 0; i < 300; i++) {
+						String link = it.next();
+						toRemove.add(link);
+						BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, link);
+						documents.add(doc);
+					}
+					
+					nextLinks.removeAll(toRemove);
+					
+					/*
+					for(int i = 0; i < 200; i++) {
+						String storeUrl = nextLinks.remove(nextLinks.size() - 1);						
+						BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, storeUrl);
+						documents.add(doc);
+					}
+					*/
+					
+					synchronized (dblock) {
+						linkCollection.insert(documents);						
+					}
+				}
+			}
+		}
+	}
+	
+	public void insertPageFailed(String url, String message) {
+		url = Util.safe(url);
+		activeUrls.remove(url);
+		BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url)
+				.append("error", message);
+
+		errorCollection.insert(doc);
+	}
+	
+	public void insertPageResult(String url, String content, int wordCount, int wordCountNN, int wordCountBM, int wordCountEN) {
+		url = Util.safe(url);
+		activeUrls.remove(url);
+		synchronized (done) {
+			if(done.contains(url)) {
+				return;
+			}
+			done.add(url);			
+		}
+		
+		ResultBuffer buffer = new ResultBuffer(url, content, wordCount, wordCountNN, wordCountBM, wordCountEN);
+		synchronized (cachelock) {
+			resultBuffer.put(url, buffer);
+		}
+		if(resultBuffer.size() > 100) {
+			storeResultBuffer();
+		}
+	}
+
+	private void storeResultBuffer() {
+		  
+		List<DBObject> documents = new LinkedList<DBObject>();
+		List<DBObject> contentDocuments = new LinkedList<DBObject>();
+				
+		synchronized (cachelock) {
+		
+			for(ResultBuffer res : resultBuffer.values()) {
+				BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, res.url)
+				        .append("wordcount", res.wordCount)
+				        .append("wordcountNN", res.wordCountNN)
+				        .append("wordcountBM", res.wordCountBM)
+				        .append("wordcountEN", res.wordCountEN);
+
+				documents.add(doc);
+				
+				BasicDBObject contentDoc = new BasicDBObject(CRAWLID, crawlId).append(URL, res.url).append(CONTENT, res.content);
+				contentDocuments.add(contentDoc);				
+			}
+			resultBuffer.clear();
+		}
+
+		if(documents.size() > 0) {
+			synchronized (dblock) {
+				contentCollection.insert(contentDocuments);				
+				resultCollection.insert(documents);				
+			}
+		}
 	}
 	
 	private SinglePage getCrawlWords() {
@@ -432,7 +586,7 @@ public class StorageHandler {
 		BasicDBObject searchQuery = new BasicDBObject();
 		searchQuery.put(CRAWLID, crawlId);
 		searchQuery.put(URL, java.util.regex.Pattern.compile(safeUrl));
-
+		
 		DBCursor cursor = resultCollection.find(searchQuery);
 		
 		try {
@@ -501,7 +655,7 @@ public class StorageHandler {
 		BasicDBObject searchQuery = new BasicDBObject();
 		searchQuery.put(CRAWLID, crawlId);
 		searchQuery.put(URL, java.util.regex.Pattern.compile(safeUrl));
-
+		
 		DBCursor cursor = resultCollection.find(searchQuery);
 
 		try {
@@ -587,6 +741,7 @@ public class StorageHandler {
 			searchQuery.put(URL, java.util.regex.Pattern.compile(safeFilter));
 		}
 		
+		
 		String url = domain;
 		if(filter != null && !"".equals(filter)) {
 			url = filter;
@@ -623,82 +778,6 @@ public class StorageHandler {
 		}
 		
 		return new CrawlResult(crawlId, Util.unsafe(url), timeRes.startTime, timeRes.endTime, totalPages, 0, 0, 0, 0);
-	}
-		
-	public void insertUnparsedPage(String url) {
-		url = Util.safe(url);
-		if(!alreadyParsed(url)) {
-			System.out.println("insertUnparsedPage: " + url);
-			synchronized (nextLinks) {
-				if(nextLinks.size() < 1000) {
-					nextLinks.add(url);
-					return;
-				}
-			}
-			
-			BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url);
-			linkCollection.insert(doc);
-		}
-	}
-	
-	public void insertPageFailed(String url, String message) {
-		url = Util.safe(url);
-		BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url)
-				.append("error", message);
-
-		errorCollection.insert(doc);
-	}
-	
-	public void insertPageResult(String url, String content, int wordCount, int wordCountNN, int wordCountBM, int wordCountEN) {
-
-		ResultBuffer buffer = new ResultBuffer(Util.safe(url), content, wordCount, wordCountNN, wordCountBM, wordCountEN);
-		synchronized (resultBuffer) {
-			resultBuffer.add(buffer);
-		}
-		if(resultBuffer.size() > 20) {
-			storeResultBuffer();
-		}
-		/*
-		url = Util.safe(url);
-		BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, url)
-        .append("wordcount", wordCount)
-        .append("wordcountNN", wordCountNN)
-        .append("wordcountBM", wordCountBM)
-        .append("wordcountEN", wordCountEN);
-        
-		resultCollection.insert(doc);
-
-		BasicDBObject contentDoc = new BasicDBObject(CRAWLID, crawlId).append(URL, url).append(CONTENT, content);
-		contentCollection.insert(contentDoc);
-		*/
-	}
-
-	private void storeResultBuffer() {
-		  
-		List<DBObject> documents = new LinkedList<DBObject>();
-		List<DBObject> contentDocuments = new LinkedList<DBObject>();
-				
-		synchronized (resultBuffer) {
-		
-			for(ResultBuffer res : resultBuffer) {
-				BasicDBObject doc = new BasicDBObject(CRAWLID, crawlId).append(URL, res.url)
-				        .append("wordcount", res.wordCount)
-				        .append("wordcountNN", res.wordCountNN)
-				        .append("wordcountBM", res.wordCountBM)
-				        .append("wordcountEN", res.wordCountEN);
-
-				documents.add(doc);
-				
-				BasicDBObject contentDoc = new BasicDBObject(CRAWLID, crawlId).append(URL, res.url).append(CONTENT, res.content);
-				contentDocuments.add(contentDoc);				
-			}
-			resultBuffer.clear();
-		}
-
-		if(documents.size() > 0) {
-			resultCollection.insert(documents);
-			contentCollection.insert(contentDocuments);
-		}
 	}
 	
 	private class ResultBuffer {
