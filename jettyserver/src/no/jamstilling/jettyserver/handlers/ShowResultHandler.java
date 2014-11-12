@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import no.jamstilling.jettyserver.JettyServer;
 import no.jamstilling.mongo.StorageHandler;
 import no.jamstilling.mongo.Util;
 import no.jamstilling.mongo.result.Crawl;
@@ -102,7 +103,7 @@ public class ShowResultHandler extends FileHandler {
 				buffer1.append("<td>" + res.totalWords + "</td>");
 				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0)+ "%</td>");
 				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / Math.max(1, (res.totalNNWords+res.totalBMWords)))) * 100.0) + "%</td>");
-				buffer1.append("<td>" + "<form method=POST action=\"resultpage?domain="+domain+"&crawlid="+crawlId + "&url=" + Util.safe(res.url) +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
+				buffer1.append("<td>" + "<form method=POST action=\"resultpage?domain="+domain+"&crawlid="+crawlId + "&url=" + Util.safe(res.url) +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+ JettyServer.getLanguage("SEE") +"\"></form>" + "</td>");
 				buffer1.append("</tr>");
 			}
 		}		
@@ -121,11 +122,11 @@ public class ShowResultHandler extends FileHandler {
 		
 		buffer2.append("<table border=\"1\">");	
 		buffer2.append("<tr>");
-	    buffer2.append("<th>URL</th>");
-	    buffer2.append("<th>Undersider</th>");
-	    buffer2.append("<th>Nynorsk</th>");
-	    buffer2.append("<th>Bokmål</th>");
-	    buffer2.append("<th>Detaljer</th>");
+	    buffer2.append("<th>" + JettyServer.getLanguage("URL") + "</th>");
+	    buffer2.append("<th>" + JettyServer.getLanguage("SUB_PAGES") + "</th>");
+	    buffer2.append("<th>" + JettyServer.getLanguage("NYNORSK") + "</th>");
+	    buffer2.append("<th>" + JettyServer.getLanguage("BOKMAAL") + "</th>");
+	    buffer2.append("<th>" + JettyServer.getLanguage("DETAILS") + "</th>");
 		buffer2.append("</tr>");
 	
 		int counter = 0;
@@ -139,7 +140,7 @@ public class ShowResultHandler extends FileHandler {
 				buffer2.append("<td>" + res.totalPages + "</td>");
 				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0)+ "%</td>");
 				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0) + "%</td>");
-				buffer2.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawlId + "&filter=" + Util.safe(res.url) + "&level=" + level +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
+				buffer2.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawlId + "&filter=" + Util.safe(res.url) + "&level=" + level +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+JettyServer.getLanguage("SEE")+"\"></form>" + "</td>");
 				buffer2.append("</tr>");
 			}
 		}		
@@ -160,31 +161,31 @@ public class ShowResultHandler extends FileHandler {
 		buffer.append("<table border=\"1\">");
 		
 		buffer.append("<tr>");
-		buffer.append("<td>Startet</td>");
+		buffer.append("<td>" + JettyServer.getLanguage("STARTED") +"</td>");
 		buffer.append("<td>" + result.startTime + "</td>");
 		buffer.append("</tr>");
 		
 		buffer.append("<tr>");
-		buffer.append("<td>Ferdig</td>");
+		buffer.append("<td>" + JettyServer.getLanguage("DONE") +"</td>");
 		String endTime = result.endTime;
 		if(endTime == null || "".equals(endTime)) {
-			endTime = "Pågår";
+			endTime = JettyServer.getLanguage("ONGOING");
 		}
 		buffer.append("<td>" + endTime + "</td>");
 		buffer.append("</tr>");
 		
 		buffer.append("<tr>");
-		buffer.append("<td>Antall sider</td>");
+		buffer.append("<td>" + JettyServer.getLanguage("NUMBER_OF_PAGES") +"</td>");
 		buffer.append("<td>" + result.totalPages + "</td>");
 		buffer.append("</tr>");
 
 		buffer.append("<tr>");
-		buffer.append("<td>Nynorsk</td>");
+		buffer.append("<td>" + JettyServer.getLanguage("NYNORSK") +"</td>");
 		buffer.append("<td>" + String.format( "%.2f", (((double) result.totalNNWords / Math.max(1,(result.totalNNWords+result.totalBMWords)))) * 100.0)+ "%</td>");
 		buffer.append("</tr>");
 
 		buffer.append("<tr>");
-		buffer.append("<td>Bokmål</td>");
+		buffer.append("<td>" + JettyServer.getLanguage("BOKMAAL") +"</td>");
 		buffer.append("<td>" + String.format( "%.2f", (((double) result.totalBMWords / Math.max(1,(result.totalNNWords+result.totalBMWords)))) * 100.0) + "%</td>");
 		buffer.append("</tr>");
 

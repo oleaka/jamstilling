@@ -4,6 +4,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
@@ -31,6 +36,7 @@ public class JettyServer {
 	
 	private int port = 8081;
 	
+	private static Map<String, String> language = new HashMap<String, String>();
 	
 	private static CrawlManager crawlManager = null;
 	
@@ -47,7 +53,7 @@ public class JettyServer {
 
 	public JettyServer() throws Exception {
 		readConfig();
-		
+		readLanguage();
 		startServer();
 	}
 
@@ -88,6 +94,40 @@ public class JettyServer {
 		}
 		return crawlManager;
 	}
+
+	private void readLanguage() {
+		Properties prop = new Properties();
+		
+		try {
+		
+			InputStream inputStream = new FileInputStream("language.properties");
+			Reader reader = new InputStreamReader(inputStream, "UTF-8");
+			   
+			prop.load(reader);
+	 		
+	 		Enumeration e = prop.propertyNames();
+
+	 	    while (e.hasMoreElements()) {
+	 	      String key = (String) e.nextElement();
+	 	    
+	 	      language.put(key, prop.getProperty(key));
+	 	    }
+	 		
+	 		
+	 		reader.close();
+	 		inputStream.close();
+		} catch (IOException ex) {
+			logger.error("Error reading config", ex);
+		} 
+	}
+	
+	public static String getLanguage(String key) {
+		if(language.containsKey(key)) {
+			return language.get(key);
+		}
+		return key;
+	}
+
 	
 	private void readConfig() {
 		Properties prop = new Properties();

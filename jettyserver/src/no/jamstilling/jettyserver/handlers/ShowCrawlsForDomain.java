@@ -13,6 +13,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import no.jamstilling.jettyserver.JettyServer;
 import no.jamstilling.mongo.StorageHandler;
 import no.jamstilling.mongo.result.Crawl;
 
@@ -103,7 +104,7 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 		if(list.size() > 0) {
 			return createTable(list, domain);
 		} else {
-			return "Ingen ferdige undersøkelser";
+			return JettyServer.getLanguage("NO_DONE_CRAWLS");
 		}
 	}
 	
@@ -120,10 +121,10 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 		buffer.append("<table border=\"1\">");
 
 		buffer.append("<tr>");
-	    buffer.append("<th>Id</th>");
-	    buffer.append("<th>Startet</th>");
-	    buffer.append("<th>Ferdig</th>");
-	    buffer.append("<th>Resultat</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("ID") + "</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("STARTED") + "</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("DONE") + "</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("RESULT") + "</th>");
 		buffer.append("</tr>");
 		
 		for(Crawl crawl : list) {
@@ -133,11 +134,11 @@ static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getN
 			buffer.append("<td>" + crawl.started + "</td>");
 			String endTime = crawl.ended;
 			if(endTime == null || "".equals(endTime)) {
-				endTime = "Pågår";
+				endTime = JettyServer.getLanguage("ONGOING");
 			}
 			buffer.append("<td>" + endTime + "</td>");
 			
-			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId +"&filter=&level=2\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
+			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId +"&filter=&level=2\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+JettyServer.getLanguage("SEE")+"\"></form>" + "</td>");
 			
 			buffer.append("</tr>");
 		}

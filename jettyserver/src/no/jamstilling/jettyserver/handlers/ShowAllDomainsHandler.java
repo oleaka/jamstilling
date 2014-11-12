@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import no.jamstilling.jettyserver.JettyServer;
 import no.jamstilling.mongo.StorageHandler;
 import no.jamstilling.mongo.result.Crawl;
 
@@ -53,7 +54,7 @@ public class ShowAllDomainsHandler extends FileHandler {
 	
 	private String createDomainsText(List<String> domains) {
 		if(domains.size() == 0) {
-			return "Ingen registrerte domener";
+			return JettyServer.getLanguage("NO_REGISTERED_DOMAIN");
 		}
 		Collections.sort(domains);
 		
@@ -62,15 +63,15 @@ public class ShowAllDomainsHandler extends FileHandler {
 		buffer.append("<table border=\"1\">");
 
 		buffer.append("<tr>");
-	    buffer.append("<th>Domene</th>");
-	    buffer.append("<th>Detaljar</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("DOMAIN") + "</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("DETAILS") + "</th>");
 		buffer.append("</tr>");
 		
 		for(String domain : domains) {
 			buffer.append("<tr>");
 			
 			buffer.append("<td>" + domain + "</td>");			
-			buffer.append("<td>" + "<form method=POST action=\"crawlsfordomain?domain="+domain+"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Se\"></form>" + "</td>");
+			buffer.append("<td>" + "<form method=POST action=\"crawlsfordomain?domain="+domain+"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"" + JettyServer.getLanguage("SEE") + "\"></form>" + "</td>");
 			
 			buffer.append("</tr>");
 		}

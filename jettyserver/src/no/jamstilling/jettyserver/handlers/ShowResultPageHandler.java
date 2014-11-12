@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import no.jamstilling.jettyserver.JettyServer;
 import no.jamstilling.mongo.StorageHandler;
 import no.jamstilling.mongo.Util;
 import no.jamstilling.mongo.result.PartialCrawlResult;
@@ -80,15 +81,15 @@ public class ShowResultPageHandler extends FileHandler {
 		buffer.append("<table border=\"1\">");	
 
 		buffer.append("<tr>");
-	    buffer.append("<td>Nynorsk</td>");
+	    buffer.append("<td>" + JettyServer.getLanguage("NYNORSK") +"</td>");
 	    List<String> nn = wordMap.get("nn");
-	    buffer.append("<td>" + (nn != null ? nn.toString() : "Ingen") +"</td>");
+	    buffer.append("<td>" + (nn != null ? nn.toString() : JettyServer.getLanguage("NONE")) +"</td>");
 	    buffer.append("</tr>");
 
 	    buffer.append("<tr>");
-	    buffer.append("<td>Bokmål</td>");
+	    buffer.append("<td>" + JettyServer.getLanguage("BOKMAAL") +"</td>");
 	    List<String> bm = wordMap.get("bm");
-	    buffer.append("<td>" + (bm != null ? bm.toString() : "Ingen") +"</td>");
+	    buffer.append("<td>" + (bm != null ? bm.toString() : JettyServer.getLanguage("NONE")) +"</td>");
 	    buffer.append("</tr>");
 	    
 		
@@ -103,19 +104,19 @@ public class ShowResultPageHandler extends FileHandler {
 		buffer.append("<table border=\"1\">");	
 
 		buffer.append("<tr>");
-	    buffer.append("<th>Målform</th>");
-	    buffer.append("<th>Nøkkelord</th>");
-	    buffer.append("<th>Prosent</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("LANGUAGE_FORM") +"</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("KEYWORDS") +"</th>");
+	    buffer.append("<th>" + JettyServer.getLanguage("PERSENT") +"</th>");
 	    buffer.append("</tr>");
 				
 	    buffer.append("<tr>");
-	    buffer.append("<td>Nynorsk</td>");
+	    buffer.append("<td>" + JettyServer.getLanguage("NYNORSK") +"</td>");
 	    buffer.append("<td>" + page.wordcountNN +"</td>");
 	    buffer.append("<td bgcolor=#206BA4>" + String.format( "%.2f", (((double) page.wordcountNN / Math.max(1,(page.wordcountNN+page.wordcountBM)))) * 100.0)+ "%</td>");
 	    buffer.append("</tr>");
 	    
 	    buffer.append("<tr>");
-	    buffer.append("<td>Bokmål</td>");
+	    buffer.append("<td>" + JettyServer.getLanguage("BOKMAAL") +"</td>");
 	    buffer.append("<td>" + page.wordcountBM +"</td>");
 	    buffer.append("<td bgcolor=#336600>" + String.format( "%.2f", (((double) page.wordcountBM / Math.max(1,(page.wordcountNN+page.wordcountBM)))) * 100.0) + "%</td>");
 	    buffer.append("</tr>");
