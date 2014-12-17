@@ -11,33 +11,42 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
+import no.jamstilling.mongo.Util;
+
 public class Crawler {
 
 	//static final Logger logger = LogManager.getLogger(Crawler.class.getName());
 	
 	private int sleepTime = 200;
+	public static boolean debug = false;
 	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		try {
+			System.out.println("starting crawler");
+			Util.initializeLog("crawler.log");
+			
 			new Crawler(getDomain(args));
-		} catch (IOException e) {
-			try {
-				log(e);
-			} catch (FileNotFoundException | UnsupportedEncodingException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+		} catch (Exception e) {
+			Util.log("Error starting crawl", e);
 		} 
 	}
 	
 	private static URL getDomain(String[] args) throws MalformedURLException {
+		Util.log("args.length: " + args.length);
+		for(String arg : args) {
+			Util.log("arg: " + arg);
+		}
 		
 		String domain = args[args.length-1];
+		Util.log("domain: " + domain);
+		if(!domain.startsWith("http://")) {
+			domain = "http://" + domain;
+		}
 		URL url = new URL(domain);
-		log(domain + " => " + url.toString());
+		Util.log(domain + " => " + url.toString(), null);
 		return url;
 	}
 
@@ -56,15 +65,15 @@ public class Crawler {
 	 		prop.load(input);
 	
 	 		sleepTime = Integer.parseInt(prop.getProperty("sleep"));
-	 		
+	 		debug = Boolean.parseBoolean(prop.getProperty("debug"));
 	 		input.close();
 		} catch (IOException ex) {
-			ex.printStackTrace();
-	//		logger.error("Error reading config", ex);
+			Util.log("Error reading config", ex);
 		} 
 	}
 
 	
+	/*
 	private static void log(Exception e) throws FileNotFoundException, UnsupportedEncodingException {
 		PrintWriter writer = new PrintWriter(System.currentTimeMillis() + ".log", "UTF-8");
 
@@ -87,6 +96,7 @@ public class Crawler {
 
 		
 	}
+	*/
 
 	private void test(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 		

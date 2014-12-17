@@ -21,9 +21,6 @@ import no.jamstilling.mongo.result.PartialCrawlResult;
 import no.jamstilling.mongo.result.SinglePage;
 import no.jamstilling.mongo.result.UrlTree;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mongodb.AggregationOutput;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -48,8 +45,6 @@ public class StorageHandler {
 	//private Map<String, Integer> parsedCache = new HashMap<String, Integer>();
 	
 	static final SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm");
-	
-	static final Logger logger = LogManager.getLogger(StorageHandler.class.getName());
 	
 	private int port = 27017;
 	private String host = "localhost";
@@ -87,7 +82,7 @@ public class StorageHandler {
 	 	
 	 		input.close();
 		} catch (Exception ex) {
-		 	logger.error("Error reading config", ex);
+		 	Util.log("Error reading config", ex);
 		} 
 	}
 

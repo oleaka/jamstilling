@@ -3,6 +3,7 @@ package no.jamstilling.jettyserver.utils;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 import no.jamstilling.jettyserver.handlers.*;
+import no.jamstilling.mongo.Util;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,12 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class FileWatcher {
-
-	static final Logger logger = LogManager.getLogger(FileWatcher.class.getName());
 
 	private final static WatchService watcher = getWatcher();
 	private final static Set<Path> areWatched = new HashSet<Path>();
@@ -89,7 +85,7 @@ public class FileWatcher {
 				}
 			}).start();
 		} catch (IOException e) {
-			logger.error("Error initializing watcher service", e);
+			Util.log("Error initializing watcher service", e);
 		}
 		return service;
 	}

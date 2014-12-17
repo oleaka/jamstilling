@@ -16,7 +16,9 @@ public class CrawlerTest {
 	public void testCrawl() {
 		
 		try {
-			Crawl crawl = new Crawl(new Domene("http://www.sprakradet.no"), "", 500);	
+			Crawl crawl = new Crawl(new Domene("vikebladet.no"), "", 400);	
+			
+			//Crawl crawl = new Crawl(new Domene("http://www.uio.no"), "", 400);	
 			crawl.run();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

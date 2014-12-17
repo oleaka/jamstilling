@@ -22,17 +22,14 @@ import no.jamstilling.jettyserver.handlers.ShowResultHandler;
 import no.jamstilling.jettyserver.handlers.ShowResultPageHandler;
 import no.jamstilling.jettyserver.handlers.StartCrawlHandler;
 import no.jamstilling.jettyserver.parser.CrawlManager;
+import no.jamstilling.mongo.Util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 
 public class JettyServer {
-	
-	static final Logger logger = LogManager.getLogger(JettyServer.class.getName());
 	
 	private int port = 8081;
 	
@@ -45,9 +42,10 @@ public class JettyServer {
 	 */
 	public static void main(String[] args) {
 		try {
+			Util.initializeLog("jettyserver.log");
 			new JettyServer();
 		} catch (Exception e) {
-			logger.error("Error starting jettyserver", e);
+			Util.log("Error starting jettyserver", e);
 		}
 	}
 
@@ -117,7 +115,7 @@ public class JettyServer {
 	 		reader.close();
 	 		inputStream.close();
 		} catch (IOException ex) {
-			logger.error("Error reading config", ex);
+			Util.log("Error reading config", ex);
 		} 
 	}
 	
@@ -140,7 +138,7 @@ public class JettyServer {
 	 		
 	 		input.close();
 		} catch (IOException ex) {
-			logger.error("Error reading config", ex);
+			Util.log("Error reading config", ex);
 		} 
 	}
 	

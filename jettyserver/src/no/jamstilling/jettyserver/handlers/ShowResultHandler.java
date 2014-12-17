@@ -16,14 +16,11 @@ import no.jamstilling.mongo.result.Crawl;
 import no.jamstilling.mongo.result.CrawlResult;
 import no.jamstilling.mongo.result.PartialCrawlResult;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 
 public class ShowResultHandler extends FileHandler {
 
 	static final DecimalFormat df = new DecimalFormat("#.00");
-	static final Logger logger = LogManager.getLogger(ShowResultHandler.class.getName());
 	
 	private final String urlToHandle;
 	

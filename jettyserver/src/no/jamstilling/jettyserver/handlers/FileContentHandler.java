@@ -18,14 +18,10 @@ import no.jamstilling.jettyserver.utils.FileWatcher;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 public class FileContentHandler extends FileHandler {
-
-	static final Logger logger = LogManager.getLogger(FileContentHandler.class.getName());
 	
 	private final String urlToHandle;
 	

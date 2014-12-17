@@ -39,9 +39,6 @@ public class Crawl extends Thread {
 	
 	private StorageHandler storage;
 	
-//	private final HashSet<String> links = new HashSet<String>();
-//	private final HashSet<String> parsedLinks = new HashSet<String>();
-	
 	private final Domene domene;
 	private final ArrayList<String> exceptions;
 	private final long sleepTime;
@@ -49,6 +46,7 @@ public class Crawl extends Thread {
 	private final LanguageAnalyzer analyzer;
 	
 	public Crawl(Domene domene, String exceptionList, long sleepTime) throws IOException {
+		Util.log("Starter crawl med domene: " + domene.getDomainPart(), null);
 		this.domene = domene;
 		this.sleepTime = sleepTime;
 
@@ -71,54 +69,24 @@ public class Crawl extends Thread {
 		}
 		this.exceptions = tmpExceptionList;
 		
-	//	WebCreator.initialize(path + File.separator + domene.getDomainPart());
-	//	ResultFileWriter.initialize(path + File.separator + domene.getDomainPart());
 	}
 	
 	public void run() {
 		try {
+			Util.log("setting up trust");
 			setupTrust();
 		} catch (KeyManagementException e1) {
-			e1.printStackTrace();
+			Util.log("Error setting up trust", e1);
 		} catch (NoSuchAlgorithmException e1) {
-			e1.printStackTrace();
+			Util.log("Error setting up trust", e1);
 		}
 		
 		try {			
 			addInitialLinks();
 			performCrawl();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-		
-			/*
-			try {
-				ResultFileWriter.finish();
-				CrawlResultSummary res = reportResult();
-				DomeneParser.display.setText("\n\n");
-				
-				double nnProsent = ((double)res.nynorskWords / (double)(res.bokmaalWords + res.nynorskWords))*100.0;
-				double bmProsent = ((double)res.bokmaalWords / (double)(res.bokmaalWords + res.nynorskWords))*100.0;
-				
-				DomeneParser.display.setText("Nynorsk %: " +  String.format("%.2f", nnProsent));
-				DomeneParser.display.setText("Bokmål %: " + String.format("%.2f", bmProsent));
-		
-				DomeneParser.display.setText("Oppsummering: " + WebCreator.getSummaryFile(false));
-
-				WebCreator.createSummary(res, ResultFileWriter.getAdvancedResultSummary(), false);
-				
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			
-			try {
-				URI summary = new File(WebCreator.getSummaryFile(false)).toURI();			
-				Desktop.getDesktop().browse(summary);
-			} catch (Exception e) {
-				e.printStackTrace();
-			} 
-			*/
-		}
+			Util.log("Error starting crawl", e);
+		} 
 	}
 
 	private void setupTrust() throws NoSuchAlgorithmException, KeyManagementException {
@@ -149,18 +117,30 @@ public class Crawl extends Thread {
 
 
 	}
-
-	/*
-	private CrawlResultSummary reportResult() throws IOException {
-		return ResultFileWriter.getGlobalResult(domene.getDomainPart());
+	
+	private String getInitialURL() {
+		String url = domene.getUrl();
+	
+		try {
+			Connection con = Jsoup.connect(url);
+			Document doc = con.get();
+			if(doc != null) {
+				return url;
+			}
+		} catch (Exception e) {			
+		}
+		
+		return url;
 	}
-	*/
 	
 	private void addInitialLinks() {
-		storage.insertUnparsedPage(domene.getUrl());
+		storage.insertUnparsedPage(getInitialURL());
 	}
 	
 	private void addLink(String url) {
+		if(Crawler.debug) {
+			Util.log("insertUnparsed: " + url);
+		}
 		storage.insertUnparsedPage(url);
 	}
 	
@@ -173,30 +153,61 @@ public class Crawl extends Thread {
 		if(currentLink != null) {
 
 			try {
+				if(Crawler.debug) {
+					Util.log("in performCrawl - calling parseURL");
+					Util.flushLog();
+				}
 				parseURL(currentLink);
+				if(Crawler.debug) {
+					Util.log("in performCrawl - parseURL done");
+					Util.flushLog();
+				}
 			} catch (Exception e) {
+				Util.log("error during initial parse", e);
+				Util.flushLog();
 				e.printStackTrace();
 			} catch (Throwable e) {
+				Util.log("error during initial parse: " + e.getMessage());
+				Util.flushLog();
 				e.printStackTrace();
 			}
 		}
 	
-		CrawlThread t1 = new CrawlThread(1);
-		CrawlThread t2 = new CrawlThread(2);
-		CrawlThread t3 = new CrawlThread(3);
-		CrawlThread t4 = new CrawlThread(4);
-		
-		t1.start();
-		t2.start();
-		t3.start();
-		t4.start();
-		
-		while(!(t1.isDone() && t2.isDone() && t3.isDone() && t4.isDone())) {
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
+		try {
+			if(Crawler.debug) {
+				Util.log("Creating crawlthreads");
+				Util.flushLog();
 			}
-		}	
+			
+			CrawlThread t1 = new CrawlThread(1);
+			CrawlThread t2 = new CrawlThread(2);
+			CrawlThread t3 = new CrawlThread(3);
+			CrawlThread t4 = new CrawlThread(4);
+
+			if(Crawler.debug) {
+				Util.log("Crawlthreads created");
+			}
+			
+			t1.start();
+			t2.start();
+			t3.start();
+			t4.start();
+			
+			if(Crawler.debug) {
+				Util.log("Crawlthreads started");
+			}
+			
+			while(!(t1.isDone() && t2.isDone() && t3.isDone() && t4.isDone())) {
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+				}
+			}	
+		} catch (Exception e) {
+			Util.log("error during startup", e);
+		} catch (Throwable e) {
+			Util.log("error during startup: " + e.getMessage());
+		}
 		storage.crawlDone();
 	}
 	
@@ -213,6 +224,7 @@ public class Crawl extends Thread {
 		private boolean isDone = false;
 		
 		public void run() {
+			Util.log("crawlthread " + num + " for domain " + domene.getDomainPart() + " starting", null);
 			try {
 				String currentLink = getNextLink();
 				while(currentLink != null) {
@@ -233,7 +245,7 @@ public class Crawl extends Thread {
 					currentLink = getNextLink();
 				}
 			} finally {
-				System.out.println("Crawl " + num + " done");
+				Util.log("crawlthread " + num + " for domain " + domene.getDomainPart() + " done", null);
 				isDone = true;
 			}
 		}
@@ -257,61 +269,90 @@ public class Crawl extends Thread {
 			}
 
 	//		System.out.println("findLinks: " + absoluteLink);
+		
+			if(Crawler.debug) {
+				Util.log("findLinks:: " + absoluteLink);
+			}
 			
 			if(verifyLink(absoluteLink)) {
 				if(!absoluteLink.equals(url)) {
+					if(Crawler.debug) {
+						Util.log("calling addLink: " + absoluteLink);
+					}
 					addLink(absoluteLink);
+					if(Crawler.debug) {
+						Util.log("addLink returned: " + absoluteLink);
+					}
 				} 
-			}	
-
+			}
 		}
-
+		if(Crawler.debug) {
+			Util.log("findLinks done");
+		}	
 	}
 	
 	private void parseURL(String url) {
 		try {
-			System.out.println("parse: " + url);
+			if(Crawler.debug) {
+				Util.log("parse: " + url);
+			}
 			Connection conn = Jsoup.connect(url);
 			conn.timeout(10000);
 			Document doc = conn.get();		
+	
+			if(Crawler.debug) {
+				Util.log("body: " + doc);
+			}
 			
-			analyzeBody(doc, url);
+			analyzeBody(doc, url);	
 			findLinks(doc, url);
+			if(Crawler.debug) {
+				Util.log("parse: " + url + " findLinks returned");
+			}
 		} catch (UnsupportedMimeTypeException e) {
 
 			String type = e.getMimeType();
-			System.out.println("type: " + type);
+			if(Crawler.debug) {
+				Util.log("type: " + type);
+			}
+
 			if (type != null) {
 				try {
 					if (type.toLowerCase().contains("pdf")) {
-						System.out.println("pdf");
 						String body = DownloadPDF.getBody(url);
 						if (body != null) {
-							System.out.println("pdfbody: " + body.length());
 							analyzeBody(body, url);
 						}
 					} else {
+						Util.log("page failed",e);
+
 						storage.insertPageFailed(url, e.getMessage());
 					}
 				} catch (Exception x) {
+					Util.log("page failed",x);
+
 					storage.insertPageFailed(url, x.getMessage());
 				} catch (Throwable x) {
+					Util.log("page failed: " + x.getMessage());
 					storage.insertPageFailed(url, x.getMessage());
 				}
 			} else {
+				Util.log("page failed",e);
 				storage.insertPageFailed(url, e.getMessage());
 			}
 		} catch (HttpStatusException e) {
+			Util.log("page failed",e);
 			storage.insertPageFailed(url, e.getMessage());
 		} catch (IOException e) {
+			Util.log("page failed",e);
 			storage.insertPageFailed(url, e.getMessage());
 		} catch (Exception e) {
+			Util.log("page failed",e);
 			storage.insertPageFailed(url, e.getMessage());
 		} catch (Throwable e) {
+			Util.log("page failed: " + e.getMessage());
 			storage.insertPageFailed(url, e.getMessage());
 		}
-		
-
 	}
 	
 	

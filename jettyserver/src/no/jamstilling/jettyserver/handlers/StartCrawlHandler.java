@@ -33,17 +33,22 @@ public class StartCrawlHandler extends AbstractHandler {
     		String exceptions = request.getParameter("exceptions");
 
 	        try {
-	        	if(JettyServer.getCrawlManager().startCrawl(domain)) {
-	    	        response.getWriter().println("<html><body>Startet undersøkelse av " + domain + "</body></html>");
-	    	   } else {
-	    			response.getWriter().println("<html><body>Noe gikk galt.</body></html>");
-	        	}
-			} catch (URISyntaxException e) {
-				response.getWriter().println("<html><body>Error starting crawl " + e.getMessage() + "</body></html>");
-			}
-	        
+	        	JettyServer.getCrawlManager().startCrawl(domain);
+	        	response.getWriter().println(getOverviewText(domain));//"<html><body>Startet undersøkelse av " + domain + "</body></html>");
+			} catch (Exception e) {
+				response.getWriter().println("<html><body>Noe gikk galt.<p>");
+				response.getWriter().println(e.getMessage());
+				response.getWriter().println("</body></html>");
+			}	        
     	} 
 	}
 
-	
+	private String getOverviewText(String domain) {
+		String html = "<html><body>Startet undersøkelse av " + domain + "<p>";
+		
+		html += "<form method=POST action=\"crawlsfordomain?domain="+domain +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Til oversikt\"></form>";
+		html += "</body></html>";
+		return html;
+		// crawlsfordomain?domain=computass.no
+	}
 }

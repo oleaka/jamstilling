@@ -17,13 +17,10 @@ import no.jamstilling.jettyserver.JettyServer;
 import no.jamstilling.mongo.StorageHandler;
 import no.jamstilling.mongo.result.Crawl;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 
 public class ShowCrawlsForDomain extends FileHandler{
 
-static final Logger logger = LogManager.getLogger(ShowCrawlsForDomain.class.getName());
 	
 	private final String urlToHandle;
 	

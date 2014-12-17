@@ -1,13 +1,19 @@
 package no.jamstilling.mongo;
 
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,22 +39,7 @@ public class Util {
 			return arg;
 		}
 	}
-	
-/*
-	Properties properties = new Properties();
-InputStream inputStream = new FileInputStream("path/to/file");
-try {
-    Reader reader = new InputStreamReader(inputStream, "UTF-8");
-    try {
-        properties.load(reader);
-    } finally {
-        reader.close();
-    }
-} finally {
-   inputStream.close();
-}
-	*/
-	
+		
 	public static Map<String, List<String>> getDefaultWords() {
 		Properties prop = new Properties();
 		
@@ -103,4 +94,66 @@ try {
 		return words;
 	}
 	
+	
+	private static final SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+	private static String logFileName = "log.txt";
+	public static PrintWriter logFile = null;
+	
+	
+	public static void initializeLog(String fileName) {
+		logFileName = fileName;
+	}
+	
+	private static PrintWriter getLogFile() {
+		if(logFile == null) {
+			try {
+				logFile = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, true)));
+				logFile.println(System.getProperty("java.version"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return logFile;
+	}
+	
+	public static void flushLog() {
+		PrintWriter log = getLogFile();
+		if(log != null){
+			synchronized (log) {
+				log.flush();				
+			}
+		}
+	}
+	
+	public static void log(String message) {
+		log(message, null);
+	}
+	
+	public static synchronized void log(String message, Exception e) {
+		//System.out.println(message);
+		PrintWriter log = getLogFile();
+		if(log != null){
+			synchronized (log) {
+				log.println(format.format(new Date()) + ": " + message);
+				if(e != null) {
+					log.println(e.getMessage());
+					for(StackTraceElement elem : e.getStackTrace()) {
+						if(elem != null)
+							log.println(elem);
+					}
+				}
+				/*
+				log.flush();
+				try {
+					Thread.sleep(300);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				*/
+				
+			}
+		}
+				
+	}
 }

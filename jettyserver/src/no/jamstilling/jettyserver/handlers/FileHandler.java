@@ -11,16 +11,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import no.jamstilling.jettyserver.utils.FileWatcher;
+import no.jamstilling.mongo.Util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 public abstract class FileHandler extends AbstractHandler  {
 	
-	static final Logger logger = LogManager.getLogger(FileHandler.class.getName());
-
 	private final String fileName;
 	private String fileContent = "";
 	
@@ -29,12 +26,12 @@ public abstract class FileHandler extends AbstractHandler  {
 		try {
 			this.fileContent = readFile();
 		} catch (IOException e) {
-			logger.error("Error reading file", e);
+			Util.log("Error reading file", e);
 		}
 		try {
 			FileWatcher.registerFile(new File(fileName).toPath(), this);
 		} catch (IOException e) {
-			logger.error("Error registering file", e);
+			Util.log("Error registering file", e);
 		}
 	}
 
@@ -46,7 +43,7 @@ public abstract class FileHandler extends AbstractHandler  {
 		try {
 			fileContent = readFile();
 		} catch (IOException e) {
-			logger.error("Error reading file", e);
+			Util.log("Error reading file", e);
 		}
 	}
 		

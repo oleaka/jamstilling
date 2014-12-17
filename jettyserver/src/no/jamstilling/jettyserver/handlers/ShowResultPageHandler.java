@@ -15,8 +15,6 @@ import no.jamstilling.mongo.Util;
 import no.jamstilling.mongo.result.PartialCrawlResult;
 import no.jamstilling.mongo.result.SinglePage;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 
 public class ShowResultPageHandler extends FileHandler {
@@ -26,7 +24,7 @@ public class ShowResultPageHandler extends FileHandler {
 	static final String engelskFormat = "<font style=\"BACKGROUND-COLOR: E86850\" color=\"white\">####</font>";
 	
 	static final DecimalFormat df = new DecimalFormat("#.00");
-	static final Logger logger = LogManager.getLogger(ShowResultPageHandler.class.getName());
+	//static final Logger logger = LogManager.getLogger(ShowResultPageHandler.class.getName());
 			
 	private final String urlToHandle;
 			
