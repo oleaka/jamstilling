@@ -44,7 +44,7 @@ public class StartCrawlHandler extends AbstractHandler {
 	}
 
 	private String getOverviewText(String domain) {
-		String html = "<html><body>Startet undersøkelse av " + domain + "<p>";
+		String html = "<html><body>Starta undersøking av " + domain + "<p>";
 		
 		html += "<form method=POST action=\"crawlsfordomain?domain="+domain +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Til oversikt\"></form>";
 		html += "</body></html>";

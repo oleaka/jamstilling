@@ -83,10 +83,10 @@ public class ShowResultHandler extends FileHandler {
 		buffer1.append("<table border=\"1\">");	
 		buffer1.append("<tr>");
 	    buffer1.append("<th>URL</th>");
-	    buffer1.append("<th>Antall ord</th>");
+	    buffer1.append("<th>Ord</th>");
 	    buffer1.append("<th>Nynorsk</th>");
 	    buffer1.append("<th>Bokmål</th>");
-	    buffer1.append("<th>Detaljer</th>");
+	    buffer1.append("<th>Detaljar</th>");
 	    buffer1.append("</tr>");
 
 	    int counter = 0;
@@ -100,7 +100,7 @@ public class ShowResultHandler extends FileHandler {
 				buffer1.append("<td>" + res.totalWords + "</td>");
 				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0)+ "%</td>");
 				buffer1.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / Math.max(1, (res.totalNNWords+res.totalBMWords)))) * 100.0) + "%</td>");
-				buffer1.append("<td>" + "<form method=POST action=\"resultpage?domain="+domain+"&crawlid="+crawlId + "&url=" + Util.safe(res.url) +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+ JettyServer.getLanguage("SEE") +"\"></form>" + "</td>");
+				buffer1.append("<td>" + "<form method=POST action=\"resultpage?domain="+domain+"&crawlid="+crawlId + "&url=" + Util.safe(res.url) +"\" style=\"margin: 0; text-align: center;\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+ JettyServer.getLanguage("SEE") +"\"></form>" + "</td>");
 				buffer1.append("</tr>");
 			}
 		}		
@@ -137,7 +137,7 @@ public class ShowResultHandler extends FileHandler {
 				buffer2.append("<td>" + res.totalPages + "</td>");
 				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalNNWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0)+ "%</td>");
 				buffer2.append("<td>" + String.format( "%.2f", (((double) res.totalBMWords / Math.max(1,(res.totalNNWords+res.totalBMWords)))) * 100.0) + "%</td>");
-				buffer2.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawlId + "&filter=" + Util.safe(res.url) + "&level=" + level +"\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+JettyServer.getLanguage("SEE")+"\"></form>" + "</td>");
+				buffer2.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawlId + "&filter=" + Util.safe(res.url) + "&level=" + level +"\" style=\"margin: 0; text-align: center;\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+JettyServer.getLanguage("SEE")+"\"></form>" + "</td>");
 				buffer2.append("</tr>");
 			}
 		}		

@@ -110,13 +110,13 @@ public class ShowResultPageHandler extends FileHandler {
 	    buffer.append("<tr>");
 	    buffer.append("<td>" + JettyServer.getLanguage("NYNORSK") +"</td>");
 	    buffer.append("<td>" + page.wordcountNN +"</td>");
-	    buffer.append("<td bgcolor=#206BA4>" + String.format( "%.2f", (((double) page.wordcountNN / Math.max(1,(page.wordcountNN+page.wordcountBM)))) * 100.0)+ "%</td>");
+	    buffer.append("<td bgcolor=#206BA4><font style=\"BACKGROUND-COLOR: 206BA4\" color=\"white\">" + String.format( "%.2f", (((double) page.wordcountNN / Math.max(1,(page.wordcountNN+page.wordcountBM)))) * 100.0)+ "%</font></td>");
 	    buffer.append("</tr>");
 	    
 	    buffer.append("<tr>");
 	    buffer.append("<td>" + JettyServer.getLanguage("BOKMAAL") +"</td>");
 	    buffer.append("<td>" + page.wordcountBM +"</td>");
-	    buffer.append("<td bgcolor=#336600>" + String.format( "%.2f", (((double) page.wordcountBM / Math.max(1,(page.wordcountNN+page.wordcountBM)))) * 100.0) + "%</td>");
+	    buffer.append("<td bgcolor=#336600><font style=\"BACKGROUND-COLOR: 336600\" color=\"white\">" + String.format( "%.2f", (((double) page.wordcountBM / Math.max(1,(page.wordcountNN+page.wordcountBM)))) * 100.0) + "%</font></td>");
 	    buffer.append("</tr>");
 	    
 	    buffer.append("</table>");

@@ -135,7 +135,7 @@ public class ShowCrawlsForDomain extends FileHandler{
 			}
 			buffer.append("<td>" + endTime + "</td>");
 			
-			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId +"&filter=&level=2\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+JettyServer.getLanguage("SEE")+"\"></form>" + "</td>");
+			buffer.append("<td>" + "<form method=POST action=\"result?domain="+domain+"&crawlid="+crawl.crawlId +"&filter=&level=2\" style=\"margin: 0; text-align: center;\"><input type=hidden name=review value=\"2\"><input type=submit value=\""+JettyServer.getLanguage("SEE")+"\"></form>" + "</td>");
 			
 			buffer.append("</tr>");
 		}
@@ -145,7 +145,7 @@ public class ShowCrawlsForDomain extends FileHandler{
 	}
 
 	private String createStartCrawlText(String domain) {
-		return "Ingen aktive undersøkelser.<br>"
-			+ "<form method=POST action=\"crawl_start?domain="+domain+ "\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Start ny undersøkelse\"></form>";
+		return "Ingen aktive undersøkingar.<br>"
+			+ "<form method=POST action=\"crawl_start?domain="+domain+ "\"><input type=hidden name=review value=\"2\"><input type=submit value=\"Start ny undersøking\"></form>";
 	}
 }
