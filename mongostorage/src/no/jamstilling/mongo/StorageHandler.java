@@ -437,7 +437,7 @@ public class StorageHandler {
 	public void insertUnparsedPage(String url) {
 		url = Util.safe(url);
 		if(!alreadyParsed(url)) {
-			System.out.println("insertUnparsedPage: " + url);
+			//System.out.println("insertUnparsedPage: " + url);
 			synchronized (cachelock) {
 				nextLinks.add(url);
 				
@@ -551,18 +551,18 @@ public class StorageHandler {
 	}
 	
 	private String getContent(String url) {
-		System.out.println("getContent(" + url + ")");
+		//System.out.println("getContent(" + url + ")");
 		BasicDBObject searchQuery = new BasicDBObject();
 		searchQuery.put(CRAWLID, crawlId);
 		searchQuery.put(URL, url);
 
-		DBCursor cursor = contentCollection.find(searchQuery);
+		DBCursor cursor = contentCollection.find(searchQuery).limit(1);
 		
 		try {
 			while(cursor.hasNext()) {
 				DBObject row = cursor.next();
 				String content = (String) row.get(CONTENT);
-				System.out.println("found content");
+				//System.out.println("found content");
 				return content;
 			}
 		} catch (Exception e) {
@@ -575,14 +575,14 @@ public class StorageHandler {
 	
 	public SinglePage getURLContent(String url) {
 		String safeUrl = Util.safe(url);
-		System.out.println("getURLContent(" + url + " => " + safeUrl + ")");
+		//System.out.println("getURLContent(" + url + " => " + safeUrl + ")");
 		SinglePage words = getCrawlWords();
 		
 		BasicDBObject searchQuery = new BasicDBObject();
 		searchQuery.put(CRAWLID, crawlId);
 		searchQuery.put(URL, java.util.regex.Pattern.compile(safeUrl));
 		
-		DBCursor cursor = resultCollection.find(searchQuery);
+		DBCursor cursor = resultCollection.find(searchQuery).limit(1);
 		
 		try {
 			while(cursor.hasNext()) {
@@ -606,7 +606,7 @@ public class StorageHandler {
 	
 	public List<PartialCrawlResult> getDetailResult(int level, String filter) {
 		String safeFilter = Util.safe(filter);
-		System.out.println("getDetailResult(level:" + level + ", filter:" + filter +")");
+		//System.out.println("getDetailResult(level:" + level + ", filter:" + filter +")");
 		List<PartialCrawlResult> resList = new LinkedList<PartialCrawlResult>();
 
 		BasicDBObject searchQuery = new BasicDBObject();
@@ -645,13 +645,13 @@ public class StorageHandler {
 	private PartialCrawlResult getPartialResultSinglePage(String url) {
 		
 		String safeUrl = Util.safe(url);
-		System.out.println("getPartialResultSinglePage(url:" + url + " -- " + safeUrl + ")");
+		//System.out.println("getPartialResultSinglePage(url:" + url + " -- " + safeUrl + ")");
 
 		BasicDBObject searchQuery = new BasicDBObject();
 		searchQuery.put(CRAWLID, crawlId);
 		searchQuery.put(URL, java.util.regex.Pattern.compile(safeUrl));
 		
-		DBCursor cursor = resultCollection.find(searchQuery);
+		DBCursor cursor = resultCollection.find(searchQuery).limit(1);
 
 		try {
 			if(cursor.hasNext()) {
@@ -673,7 +673,7 @@ public class StorageHandler {
 	
 	private PartialCrawlResult getPartialResult(String url, int totalPages) {
 		String safeUrl = Util.safe(url);
-		System.out.println("getPartialResult(url:" + url + ", totalPages:" + totalPages +")");
+		//System.out.println("getPartialResult(url:" + url + ", totalPages:" + totalPages +")");
 		
 		BasicDBObject searchQuery = new BasicDBObject();
 		searchQuery.put(CRAWLID, crawlId);

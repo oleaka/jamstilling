@@ -55,7 +55,7 @@ public class LanguageAnalyzer {
 		return res;
 	}	
 
-	private static List<String> splitWords(String text) {
+	public static List<String> splitWords(String text) {
 
 		List<String> words = new LinkedList<String>();
 		StringBuilder stringBuffer = new StringBuilder(text);
@@ -65,6 +65,8 @@ public class LanguageAnalyzer {
 			Character charAt = stringBuffer.charAt(i);
 			if(Character.isAlphabetic(charAt)){
 				SWord = SWord + charAt;
+			} else if(!SWord.isEmpty() && (charAt.equals('.') || charAt.equals('@')) && (stringBuffer.length() > (i+1) && Character.isAlphabetic(stringBuffer.charAt(i+1)))) {
+				SWord = SWord + charAt;				
 			}
 			else{
 				if(!SWord.isEmpty()) {
